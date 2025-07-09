@@ -1,6 +1,6 @@
 # Track Buddy 🏁
 
-A comprehensive weather tracking application designed specifically for racing teams, drivers, and motorsport enthusiasts. Get real-time weather data, track conditions, and manage racing notes and setups for tracks worldwide.
+A comprehensive weather tracking and weekend organization application designed specifically for racing teams, drivers, and motorsport enthusiasts. Get real-time weather data, track conditions, and manage racing notes, iteneraries and setups for tracks worldwide.
 
 ![Track Buddy](https://images.pexels.com/photos/358220/pexels-photo-358220.jpeg?auto=compress&cs=tinysrgb&w=1200&h=400&fit=crop)
 
@@ -14,6 +14,7 @@ Track Buddy provides everything you need to make informed decisions about racing
 - **Track Management** - Support for F1, MotoGP, NASCAR, IndyCar tracks worldwide
 - **Session-based Notes** - Organize notes by practice, qualifying, and race sessions
 - **Setup Tracking** - Detailed car setup management with weather snapshots
+- **Itenerary Management** - Detailed weekend management. Manage flights, weekend calendars and get notifications for upcoming sessions
 - **Multi-unit Support** - Celsius/Fahrenheit, km/h/mph, mm/inches
 - **Dark/Light Themes** - Customizable interface for any lighting condition
 - **Privacy-First Design** - All data stays on your device, no tracking or data collection
