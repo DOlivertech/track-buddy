@@ -85,7 +85,9 @@ jobs:
           npm ci
           npm install -g eas-cli
 
-      - name: Build Android APK (unsigned by default)
+      - name: Build Android APK
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas build --platform android --profile preview --non-interactive
 
   web:
@@ -109,7 +111,7 @@ jobs:
 
       - name: Build Web App
         run: |
-          npx expo export --platform web --dev false
+          npx expo export --platform web
           mkdir -p web-dist
           mv dist/* web-dist/
 
