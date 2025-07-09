@@ -6,6 +6,7 @@ on:
       - main
       - beta
       - release-candidate
+      - '**'  # (Uncomment during early dev to allow all branches)
 
 jobs:
   setup:
@@ -25,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-      
+
       - name: Run linter (non-blocking)
         run: npm run lint || echo "::warning ::Linting failed, but continuing"
 
@@ -41,15 +42,26 @@ jobs:
       - name: Determine Semantic Version
         id: version
         run: |
+          set -euo pipefail
+
           BRANCH="${GITHUB_REF#refs/heads/}"
           echo "Current branch: $BRANCH"
 
           BASE_TAG=$(git tag --list 'v*' | sort -V | grep -vE '\-(beta|rc)' | tail -n 1)
-          [[ -z "$BASE_TAG" ]] && BASE_TAG="v0.0.0"
+          if [[ -z "$BASE_TAG" ]]; then
+            BASE_TAG="v0.0.0"
+          fi
+
+          echo "Using base tag: $BASE_TAG"
 
           IFS='.' read -r MAJOR MINOR PATCH <<< "${BASE_TAG#v}"
 
-          COMMIT_MSG=$(git log -1 --pretty=%B)
+          # Ensure values are integers
+          MAJOR=${MAJOR:-0}
+          MINOR=${MINOR:-0}
+          PATCH=${PATCH:-0}
+
+          COMMIT_MSG=$(git log -1 --pretty=%B || echo "")
 
           if [[ "$COMMIT_MSG" == *"BREAKING CHANGE"* ]]; then
             ((MAJOR++)); MINOR=0; PATCH=0
@@ -135,8 +147,6 @@ jobs:
           name: track-buddy-web
           path: web-dist/
 
-      # Optional: Add web-based Selenium tests here if desired
-
   release:
     name: GitHub Release with Changelog
     needs: [android, setup]
@@ -178,5 +188,14 @@ jobs:
           files: "*.apk"
           body: ${{ steps.changelog.outputs.content }}
           prerelease: ${{ contains(needs.setup.outputs.version, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ needs.setup.outputs.version }}
+          git push origin ${{ needs.setup.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
