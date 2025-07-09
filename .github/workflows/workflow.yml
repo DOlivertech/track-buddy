@@ -1,0 +1,176 @@
+name: Expo Android & Web CI
+
+on:
+  push:
+    branches:
+      - master
+      - beta
+      - release-candidate
+
+jobs:
+  setup:
+    name: Install, Test, Build, Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Verify build
+        run: npm run build
+
+      - name: Determine Semantic Version
+        id: version
+        run: |
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          echo "Current branch: $BRANCH"
+
+          BASE_TAG=$(git tag --list 'v*' | sort -V | grep -vE '\-(beta|rc)' | tail -n 1)
+          [[ -z "$BASE_TAG" ]] && BASE_TAG="v0.0.0"
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${BASE_TAG#v}"
+
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+
+          if [[ "$COMMIT_MSG" == *"BREAKING CHANGE"* ]]; then
+            ((MAJOR++)); MINOR=0; PATCH=0
+          elif [[ "$COMMIT_MSG" == feat:* ]]; then
+            ((MINOR++)); PATCH=0
+          else
+            ((PATCH++))
+          fi
+
+          BASE_VERSION="v$MAJOR.$MINOR.$PATCH"
+
+          if [[ "$BRANCH" == "beta" ]]; then
+            SUFFIX="beta"
+          elif [[ "$BRANCH" == "release-candidate" ]]; then
+            SUFFIX="rc"
+          else
+            SUFFIX=""
+          fi
+
+          if [[ -n "$SUFFIX" ]]; then
+            COUNT=$(git tag --list "$BASE_VERSION-$SUFFIX.*" | wc -l)
+            NEW_VERSION="$BASE_VERSION-$SUFFIX.$((COUNT+1))"
+          else
+            NEW_VERSION="$BASE_VERSION"
+          fi
+
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "New version: $NEW_VERSION"
+
+  android:
+    name: Build Android APK
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js and Expo CLI
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: |
+          npm ci
+          npm install -g expo-cli
+
+      - name: Build APK
+        run: |
+          npx expo export --platform android
+          mkdir -p android-dist
+          mv dist/*.apk android-dist/
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: track-buddy-apk
+          path: android-dist/*.apk
+
+  web:
+    name: Build Web Export
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: npm ci
+
+      - name: Build Web App
+        run: |
+          npx expo export:web
+          mkdir -p web-dist
+          mv dist/* web-dist/
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: track-buddy-web
+          path: web-dist/
+
+      # Optional: Add web-based Selenium tests here if desired
+
+  release:
+    name: GitHub Release with Changelog
+    needs: [android, setup]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: track-buddy-apk
+          path: .
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install changelog generator
+        run: npm install -g conventional-changelog-cli
+
+      - name: Generate changelog
+        run: conventional-changelog -p angular -r 2 > temp_changelog.md
+
+      - name: Read changelog contents
+        id: changelog
+        run: |
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          cat temp_changelog.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Track Buddy ${{ needs.setup.outputs.version }}"
+          tag_name: ${{ needs.setup.outputs.version }}
+          files: "*.apk"
+          body: ${{ steps.changelog.outputs.content }}
+          prerelease: ${{ contains(needs.setup.outputs.version, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
