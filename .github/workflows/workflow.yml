@@ -24,7 +24,7 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
       
       - name: Run linter (non-blocking)
         run: npm run lint || echo "::warning ::Linting failed, but continuing"
@@ -32,8 +32,11 @@ jobs:
       # - name: Run tests
       #   run: npm test
 
-      - name: Verify build
-        run: npm run build
+      - name: Verify build Android
+        run: npm run build:android
+
+      - name: Verify build Web
+        run: npm run build:web
 
       - name: Determine Semantic Version
         id: version
