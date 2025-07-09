@@ -11,6 +11,9 @@
     "ios": {
       "supportsTablet": true
     },
+    "android": {
+      "package": "com.danieloliver.trackbuddy"
+    },
     "web": {
       "bundler": "metro",
       "output": "single",
@@ -27,7 +30,10 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "7dcbe1bf-ddf0-4991-adb5-dbb0397ef80d"
+        "projectId": "7dcbe1bf-ddf0-4991-adb5-dbb0397ef80d",
+        "cli": {
+          "appVersionSource": "appVersion"
+        }
       }
     },
     "owner": "daniel.oliver"
