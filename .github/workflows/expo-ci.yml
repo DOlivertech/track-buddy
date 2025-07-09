@@ -6,15 +6,11 @@ on:
       - main
       - beta
       - release-candidate
-      - develop
-      - 'develop/**'
-      - 'feature/**'
-      - 'bugfix/**'
-      # - '**'  # Uncomment for early dev to allow all branches
+      - 'develop/**' # Run build steps for any branch starting with develop/
 
 jobs:
   setup:
-    name: Install, Test, Build, Version
+    name: Install, Lint, Build, Version
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -29,48 +25,28 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Install Expo & EAS CLI
+        run: npm install -g expo-cli eas-cli
 
       - name: Run linter (non-blocking)
         run: npm run lint || echo "::warning ::Linting failed, but continuing"
 
-      # - name: Run tests
-      #   run: npm test
-
-      - name: Verify build Android
-        run: npm run build:android
-
-      - name: Verify build Web
+      - name: Verify build:web script
         run: npm run build:web
 
       # - name: Determine Semantic Version
       #   id: version
       #   run: |
       #     set -euo pipefail
-
       #     BRANCH="${GITHUB_REF#refs/heads/}"
       #     echo "Current branch: $BRANCH"
-
       #     BASE_TAG=$(git tag --list 'v*' | sort -V | grep -vE '\-(beta|rc)' | tail -n 1)
-
-      #     if [[ -z "$BASE_TAG" ]]; then
-      #       BASE_TAG="v0.0.0"
-      #     fi
-
-      #     echo "Using base tag: $BASE_TAG"
-
-      #     VERSION_PART="${BASE_TAG#v}"
-      #     IFS='.' read -r MAJOR MINOR PATCH <<< "$(echo "$VERSION_PART" | awk -F. '{print $1, $2, $3}')"
-
-      #     MAJOR=${MAJOR:-0}
-      #     MINOR=${MINOR:-0}
-      #     PATCH=${PATCH:-0}
-
-      #     echo "Parsed: MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
-
+      #     if [[ -z "$BASE_TAG" ]]; then BASE_TAG="v0.0.0"; fi
+      #     IFS='.' read -r MAJOR MINOR PATCH <<< "${BASE_TAG#v}"
+      #     MAJOR=${MAJOR:-0}; MINOR=${MINOR:-0}; PATCH=${PATCH:-0}
       #     COMMIT_MSG=$(git log -1 --pretty=%B || echo "")
-      #     echo "Commit message: $COMMIT_MSG"
-
       #     if [[ "$COMMIT_MSG" == *"BREAKING CHANGE"* ]]; then
       #       ((MAJOR++)); MINOR=0; PATCH=0
       #     elif [[ "$COMMIT_MSG" == feat:* ]]; then
@@ -78,9 +54,7 @@ jobs:
       #     else
       #       ((PATCH++))
       #     fi
-
       #     BASE_VERSION="v$MAJOR.$MINOR.$PATCH"
-
       #     if [[ "$BRANCH" == "beta" ]]; then
       #       SUFFIX="beta"
       #     elif [[ "$BRANCH" == "release-candidate" ]]; then
@@ -88,14 +62,12 @@ jobs:
       #     else
       #       SUFFIX=""
       #     fi
-
       #     if [[ -n "$SUFFIX" ]]; then
       #       COUNT=$(git tag --list "$BASE_VERSION-$SUFFIX.*" | wc -l)
       #       NEW_VERSION="$BASE_VERSION-$SUFFIX.$((COUNT+1))"
       #     else
       #       NEW_VERSION="$BASE_VERSION"
       #     fi
-
       #     echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
       #     echo "New version: $NEW_VERSION"
 
@@ -108,25 +80,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Node.js and Expo CLI
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-      - run: |
-          npm ci
-          npm install -g expo-cli
-
-      - name: Build APK
+      - name: Install dependencies and EAS CLI
         run: |
-          npx expo export --platform android
-          mkdir -p android-dist
-          mv dist/*.apk android-dist/
+          npm ci
+          npm install -g eas-cli
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: track-buddy-apk
-          path: android-dist/*.apk
+      - name: Build Android APK (unsigned by default)
+        run: eas build --platform android --profile preview --non-interactive
 
   web:
     name: Build Web Export
@@ -141,11 +101,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - run: npm ci
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g expo-cli
 
       - name: Build Web App
         run: |
-          npx expo export:web
+          npx expo export --platform web --dev false
           mkdir -p web-dist
           mv dist/* web-dist/
 
@@ -159,21 +123,10 @@ jobs:
     name: GitHub Release with Changelog
     needs: [android, setup]
     runs-on: ubuntu-latest
-    if: |
-      github.ref == 'refs/heads/main' ||
-      github.ref == 'refs/heads/beta' ||
-      github.ref == 'refs/heads/release-candidate'
-
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
-      - name: Download APK artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: track-buddy-apk
-          path: .
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -198,17 +151,7 @@ jobs:
         with:
           name: "Track Buddy ${{ needs.setup.outputs.version }}"
           tag_name: ${{ needs.setup.outputs.version }}
-          files: "*.apk"
           body: ${{ steps.changelog.outputs.content }}
           prerelease: ${{ contains(needs.setup.outputs.version, '-') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Tag commit and push
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git tag ${{ needs.setup.outputs.version }}
-          git push origin ${{ needs.setup.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
