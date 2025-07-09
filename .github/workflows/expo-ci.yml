@@ -125,13 +125,13 @@ jobs:
           name: track-buddy-web
           path: web-dist/
 
-      - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          personal_token: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
-          publish_dir: ./web-dist
-          publish_branch: gh-pages
+      # - name: Deploy to GitHub Pages
+      #   if: github.ref == 'refs/heads/main'
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     personal_token: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
+      #     publish_dir: ./web-dist
+      #     publish_branch: gh-pages
 
   release:
     name: GitHub Release with Changelog
