@@ -6,7 +6,7 @@ on:
       - main
       - beta
       - release-candidate
-      - 'develop/**' # Run build steps for any branch starting with develop/
+      - 'develop/**' # Run build steps for develop-based branches
 
 jobs:
   setup:
@@ -36,40 +36,46 @@ jobs:
       - name: Verify build:web script
         run: npm run build:web
 
-      # - name: Determine Semantic Version
-      #   id: version
-      #   run: |
-      #     set -euo pipefail
-      #     BRANCH="${GITHUB_REF#refs/heads/}"
-      #     echo "Current branch: $BRANCH"
-      #     BASE_TAG=$(git tag --list 'v*' | sort -V | grep -vE '\-(beta|rc)' | tail -n 1)
-      #     if [[ -z "$BASE_TAG" ]]; then BASE_TAG="v0.0.0"; fi
-      #     IFS='.' read -r MAJOR MINOR PATCH <<< "${BASE_TAG#v}"
-      #     MAJOR=${MAJOR:-0}; MINOR=${MINOR:-0}; PATCH=${PATCH:-0}
-      #     COMMIT_MSG=$(git log -1 --pretty=%B || echo "")
-      #     if [[ "$COMMIT_MSG" == *"BREAKING CHANGE"* ]]; then
-      #       ((MAJOR++)); MINOR=0; PATCH=0
-      #     elif [[ "$COMMIT_MSG" == feat:* ]]; then
-      #       ((MINOR++)); PATCH=0
-      #     else
-      #       ((PATCH++))
-      #     fi
-      #     BASE_VERSION="v$MAJOR.$MINOR.$PATCH"
-      #     if [[ "$BRANCH" == "beta" ]]; then
-      #       SUFFIX="beta"
-      #     elif [[ "$BRANCH" == "release-candidate" ]]; then
-      #       SUFFIX="rc"
-      #     else
-      #       SUFFIX=""
-      #     fi
-      #     if [[ -n "$SUFFIX" ]]; then
-      #       COUNT=$(git tag --list "$BASE_VERSION-$SUFFIX.*" | wc -l)
-      #       NEW_VERSION="$BASE_VERSION-$SUFFIX.$((COUNT+1))"
-      #     else
-      #       NEW_VERSION="$BASE_VERSION"
-      #     fi
-      #     echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-      #     echo "New version: $NEW_VERSION"
+      - name: Determine Semantic Version
+        id: version
+        run: |
+          set -euo pipefail
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          echo "Current branch: $BRANCH"
+          BASE_TAG=$(git tag --list 'v*' | sort -V | grep -vE '\-(beta|rc)' | tail -n 1)
+          [[ -z "$BASE_TAG" ]] && BASE_TAG="v0.0.0"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${BASE_TAG#v}"
+          MAJOR=${MAJOR:-0}; MINOR=${MINOR:-0}; PATCH=${PATCH:-0}
+          COMMIT_MSG=$(git log -1 --pretty=%B || echo "")
+          if [[ "$COMMIT_MSG" == *"BREAKING CHANGE"* ]]; then
+            ((MAJOR++)); MINOR=0; PATCH=0
+          elif [[ "$COMMIT_MSG" == feat:* ]]; then
+            ((MINOR++)); PATCH=0
+          else
+            ((PATCH++))
+          fi
+          BASE_VERSION="v$MAJOR.$MINOR.$PATCH"
+          if [[ "$BRANCH" == "beta" ]]; then
+            SUFFIX="beta"
+          elif [[ "$BRANCH" == "release-candidate" ]]; then
+            SUFFIX="rc"
+          else
+            SUFFIX=""
+          fi
+          if [[ -n "$SUFFIX" ]]; then
+            COUNT=$(git tag --list "$BASE_VERSION-$SUFFIX.*" | wc -l)
+            NEW_VERSION="$BASE_VERSION-$SUFFIX.$((COUNT+1))"
+          else
+            NEW_VERSION="$BASE_VERSION"
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$NEW_VERSION"
+          git push origin "$NEW_VERSION"
+
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "New version: $NEW_VERSION"
 
   android:
     name: Build Android APK
@@ -84,8 +90,8 @@ jobs:
         run: |
           npm ci
           npm install -g eas-cli
-          
-      - name: Build Android APK
+
+      - name: Build Android APK (Non Google Store)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas build --platform android --profile preview --non-interactive
@@ -123,12 +129,15 @@ jobs:
 
   release:
     name: GitHub Release with Changelog
+    if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/release-candidate' }}
     needs: [android, setup]
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
