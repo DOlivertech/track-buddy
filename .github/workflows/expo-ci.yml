@@ -85,6 +85,9 @@ jobs:
           npm ci
           npm install -g eas-cli
 
+      - name: Init EAS
+        run: eas init
+
       - name: Build Android APK
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
