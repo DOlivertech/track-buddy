@@ -2,7 +2,30 @@
 
 A comprehensive weather tracking and weekend organization application designed specifically for racing teams, drivers, and motorsport enthusiasts. Get real-time weather data, track conditions, and manage racing notes, iteneraries and setups for tracks worldwide.
 
-![Track Buddy](https://images.pexels.com/photos/358220/pexels-photo-358220.jpeg?auto=compress&cs=tinysrgb&w=1200&h=400&fit=crop)
+Please see below the state of our current publishing.
+
+🤖 Android - APK Directly from releases ( Coming Soon)
+
+📱 iOS - At Present we are not publishing to the AppStore. The process is not cheap or straightforward. At some point we will bring this application to iOS but at this moment it is not in the cards.
+
+💻 Web - You can access the project on the web here ( Coming Soon ). Your Browser storage is used so your sessions can persist even in new browser windows/tabs.
+
+# About the Creator
+
+This app was created by Racing Driver and Professional Sim Racer Daniel Oliver. Daniel noticed that there was a gap - no centralized place to have ALL of what you need on a track weekend. Whether HPDE, Time Attack or Professional Racing. Because of this - Daniel leveraged his long time engineering background to create this completely free application. This application is iterative and is intended to be free for as long as possible. If at some point demand for things like iOS or other services that would be best supported by a paid version - that will be explored. But for now, please enjoy.
+
+![Creator](assets/images/readmeimg/daniel-image.jpg)
+
+## 🙏 Support This Project
+
+If you find **Track Buddy** useful, consider supporting it:
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.me/doracing)
+[![Instagram](https://img.shields.io/badge/Follow%20on-Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/daniel.oliver25)
+[![YouTube](https://img.shields.io/badge/Watch%20on-YouTube-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/danieloliverracing)
+
+
+
 
 ## 🌟 Features Overview
 
@@ -10,14 +33,15 @@ Track Buddy provides everything you need to make informed decisions about racing
 
 - **Real-time Weather Data** - Current conditions and forecasts powered by Open-Meteo
 - **Race Condition Analysis** - Automated track condition assessment (OPTIMAL, WET, WINDY, POOR VIS, EXTREME)
-- **Session Management** - Organize data by racing sessions with import/export capabilities
-- **Track Management** - Support for F1, MotoGP, NASCAR, IndyCar tracks worldwide
+- **Session Management** - Have multiple instances of the application. Sort by car, driver, anything you'd like!
+- **Track Management** - Support for F1, MotoGP, NASCAR, IndyCar and popular HPDE tracks worldwide
 - **Session-based Notes** - Organize notes by practice, qualifying, and race sessions
 - **Setup Tracking** - Detailed car setup management with weather snapshots
 - **Itenerary Management** - Detailed weekend management. Manage flights, weekend calendars and get notifications for upcoming sessions
 - **Multi-unit Support** - Celsius/Fahrenheit, km/h/mph, mm/inches
 - **Dark/Light Themes** - Customizable interface for any lighting condition
 - **Privacy-First Design** - All data stays on your device, no tracking or data collection
+- **Persistent Demo Saved in App for inspiration** 
 
 ---
 
@@ -27,7 +51,7 @@ Track Buddy provides everything you need to make informed decisions about racing
 
 The main dashboard provides instant access to current track conditions with intelligent race condition analysis.
 
-![Current Weather](https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
+![Current Weather](assets/images/readmeimg/main-weather-img.jpg)
 
 **Key Features:**
 - **Race Condition Badges** - Instant visual indicators for track suitability
@@ -38,18 +62,16 @@ The main dashboard provides instant access to current track conditions with inte
 - **Weather Icon Integration** - Visual weather condition indicators
 - **Quick Actions** - Fast access to add notes and setups for current conditions
 
-**Race Condition Logic:**
-- **OPTIMAL** 🟢 - Perfect racing conditions (no precipitation, wind ≤25 km/h, visibility ≥5km)
-- **WET** 🔵 - Precipitation detected or high humidity (>85%)
-- **WINDY** 🟡 - Wind speeds affecting aerodynamics (>25 km/h)
-- **POOR VIS** 🟣 - Limited visibility (<5km) or heavy cloud cover (>80%)
-- **EXTREME** 🔴 - Dangerous conditions (wind >40 km/h or precipitation >50mm)
+## Race Condition Logic:
+![Race Condition Logic](assets/images/readmeimg/conditions-img.jpeg)
 
 ### 📊 Weather Forecast
 
 Detailed hourly and daily forecasts help you plan racing activities and strategy.
 
-![Weather Forecast](https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
+![Weather Forecast](assets/images/readmeimg/5-day-img.jpeg)
+
+![Weather Forecast](assets/images/readmeimg/6-hr-img.jpeg)
 
 **Features:**
 - **6-Hour Detailed Forecast** - Hourly breakdown of upcoming conditions
@@ -63,13 +85,16 @@ Detailed hourly and daily forecasts help you plan racing activities and strategy
 
 Choose from a comprehensive database of racing circuits worldwide.
 
-![Track Selection](https://images.pexels.com/photos/358220/pexels-photo-358220.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
+![Track Selection](assets/images/readmeimg/track-search.jpeg)
+
+![Track Selection](assets/images/readmeimg/track-fav.jpeg)
 
 **Supported Categories:**
 - **Formula 1** - Silverstone, Monaco, Monza, Spa-Francorchamps, Suzuka, COTA, Interlagos, Melbourne
 - **MotoGP** - Mugello, Assen, Phillip Island
 - **NASCAR** - Daytona, Talladega, Charlotte Motor Speedway
 - **IndyCar** - Indianapolis Motor Speedway, Long Beach
+- **Other** - Club or Local Tracks. Don't see your track? Suggest it!
 
 **Features:**
 - **Search & Filter** - Find tracks by name, country, or racing series
@@ -81,7 +106,11 @@ Choose from a comprehensive database of racing circuits worldwide.
 
 Organize your observations and insights by racing sessions for better data management.
 
-![Racing Notes](https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
+![Racing Notes](assets/images/readmeimg/notes-image.jpg)
+
+![Racing Notes](assets/images/readmeimg/notes-2-img.jpg)
+
+![Racing Notes](assets/images/readmeimg/notes-3-img.jpg)
 
 **Session Organization:**
 - **Practice Sessions** - Multiple practice sessions (Practice 1, Practice 2, etc.)
@@ -105,7 +134,9 @@ Organize your observations and insights by racing sessions for better data manag
 
 Track detailed car setups with weather conditions for optimal performance analysis.
 
-![Car Setup](https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
+![Car Setup](assets/images/readmeimg/setups-1.jpeg)
+
+![Car Setup](assets/images/readmeimg/setups-2.jpeg)
 
 **Setup Categories:**
 - **Tire Pressures** - Front/Rear Left/Right pressure settings (PSI)
@@ -120,11 +151,33 @@ Track detailed car setups with weather conditions for optimal performance analys
 - **Date Organization** - Chronological setup history
 - **Track Integration** - Link setups to specific circuits
 
+###  Race Weekend Itinerary 
+
+Track detailed car setups with weather conditions for optimal performance analysis.
+
+![Weekend Itinerary](assets/images/readmeimg/weekend-event-img.jpeg)
+
+![Weekend Itinerary](assets/images/readmeimg/day-event-img.jpeg)
+
+
+
+**Setup Categories:**
+- **Tire Pressures** - Front/Rear Left/Right pressure settings (PSI)
+- **Spring Rates** - Suspension spring rates (N/mm)
+- **Sway Bar Settings** - Front and rear anti-roll bar configurations
+- **Wing Settings** - Aerodynamic downforce adjustments
+- **Customizable Push and In App Notifications** - Full Functionality Coming Soon - to make sure you're never late to driver's meetings... or on track sessions!
+
+**Advanced Features:**
+- **Weather Snapshots** - Automatic weather condition capture with each setup
+- **Setup Comparison** - Compare different configurations
+- **Date Organization** - Chronological setup history
+- **Track Integration** - Link setups to specific circuits
+
 ### 🌐 Weather Radar
 
 Interactive weather radar for precipitation tracking and storm monitoring.
 
-![Weather Radar](https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
 
 **Coming Soon Features:**
 - **Live Precipitation Data** - Real-time rain and snow tracking
@@ -136,7 +189,10 @@ Interactive weather radar for precipitation tracking and storm monitoring.
 
 Organize your racing data into separate contexts for different tracks, seasons, or racing series.
 
-![Session Management](https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
+![Session Management](assets/images/readmeimg/data-img.jpeg)
+
+![Session Management](assets/images/readmeimg/data-export-img.jpeg)
+
 
 **Session Features:**
 - **Multiple Sessions** - Create separate contexts for different racing activities
@@ -155,7 +211,7 @@ Organize your racing data into separate contexts for different tracks, seasons, 
 
 Comprehensive settings for personalizing your weather experience.
 
-![Settings](https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
+![Settings](assets/images/readmeimg/units-img.jpeg)
 
 **Unit Preferences:**
 - **Temperature** - Celsius (°C) or Fahrenheit (°F)
@@ -420,34 +476,6 @@ All user data is stored locally on the device:
 
 ---
 
-## 🌍 Supported Racing Circuits
-
-### Formula 1 Circuits
-- **Silverstone Circuit** (United Kingdom) - British Grand Prix
-- **Monaco Grand Prix** (Monaco) - Monaco Grand Prix
-- **Autodromo Nazionale Monza** (Italy) - Italian Grand Prix
-- **Circuit de Spa-Francorchamps** (Belgium) - Belgian Grand Prix
-- **Suzuka International Racing Course** (Japan) - Japanese Grand Prix
-- **Circuit of the Americas** (United States) - United States Grand Prix
-- **Autódromo José Carlos Pace** (Brazil) - Brazilian Grand Prix
-- **Albert Park Circuit** (Australia) - Australian Grand Prix
-
-### MotoGP Circuits
-- **Mugello Circuit** (Italy) - Italian Grand Prix
-- **TT Circuit Assen** (Netherlands) - Dutch TT
-- **Phillip Island Grand Prix Circuit** (Australia) - Australian Grand Prix
-
-### NASCAR Tracks
-- **Daytona International Speedway** (United States) - Daytona 500
-- **Talladega Superspeedway** (United States) - Various NASCAR races
-- **Charlotte Motor Speedway** (United States) - Coca-Cola 600
-
-### IndyCar Tracks
-- **Indianapolis Motor Speedway** (United States) - Indianapolis 500
-- **Long Beach Street Circuit** (United States) - Grand Prix of Long Beach
-
----
-
 ## 🔮 Future Enhancements
 
 ### Planned Features
@@ -459,13 +487,6 @@ All user data is stored locally on the device:
 - **Tire Strategy Integration** - Compound recommendations based on conditions
 - **Lap Time Correlation** - Performance analysis with weather data
 - **Team Collaboration** - Real-time sharing and communication features
-
-### Community Features
-
-- **Track Community** - Connect with other users at the same track
-- **Setup Sharing** - Community-driven setup database
-- **Weather Reports** - User-submitted condition reports
-- **Racing Calendar Integration** - Sync with racing schedules
 
 ---
 
@@ -491,7 +512,7 @@ This project is provided under a **Non-Commercial License**:
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contributing - Closed for now ❌
 
 We welcome contributions from the motorsport and developer communities!
 
@@ -550,8 +571,6 @@ We welcome contributions from the motorsport and developer communities!
 For support, feature requests, or questions:
 
 - **GitHub Issues** - [Create an issue](https://github.com/your-username/racing-weather-pro/issues)
-- **Discussions** - Join community discussions on GitHub
-- **Email** - Contact for licensing or partnership inquiries
 
 ### Frequently Asked Questions
 
@@ -576,36 +595,4 @@ A: Absolutely! We welcome contributions from the community.
 
 ---
 
-*Built with ❤️ for the racing community*
-
----
-
-## 📸 Screenshots
-
-### Current Weather Dashboard
-![Current Weather](https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
-*Real-time weather conditions with race condition analysis and local track time*
-
-### Weather Forecast
-![Weather Forecast](https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
-*6-hour detailed and 5-day extended forecasts for race planning*
-
-### Track Selection
-![Track Selection](https://images.pexels.com/photos/358220/pexels-photo-358220.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
-*Comprehensive database of racing circuits worldwide with search and favorites*
-
-### Session Notes
-![Session Notes](https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
-*Organize notes by racing sessions with weather and track snapshots*
-
-### Car Setup Management
-![Car Setup](https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
-*Detailed car setup tracking with weather conditions and performance data*
-
-### Session Management
-![Session Management](https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
-*Manage multiple racing contexts with import/export capabilities*
-
-### Settings & Privacy
-![Settings](https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop)
-*Comprehensive settings with privacy-first design and data control*
+*Built with ❤️ for racers by racers*
