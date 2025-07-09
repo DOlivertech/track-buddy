@@ -3,7 +3,7 @@ name: Expo Android & Web CI
 on:
   push:
     branches:
-      - master
+      - main
       - beta
       - release-candidate
 
