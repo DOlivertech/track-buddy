@@ -6,6 +6,10 @@ on:
       - main
       - beta
       - release-candidate
+      - develop
+      - 'develop/**'
+      - 'feature/**'
+      - 'bugfix/**'
       # - '**'  # Uncomment for early dev to allow all branches
 
 jobs:
@@ -39,61 +43,61 @@ jobs:
       - name: Verify build Web
         run: npm run build:web
 
-      - name: Determine Semantic Version
-        id: version
-        run: |
-          set -euo pipefail
+      # - name: Determine Semantic Version
+      #   id: version
+      #   run: |
+      #     set -euo pipefail
 
-          BRANCH="${GITHUB_REF#refs/heads/}"
-          echo "Current branch: $BRANCH"
+      #     BRANCH="${GITHUB_REF#refs/heads/}"
+      #     echo "Current branch: $BRANCH"
 
-          BASE_TAG=$(git tag --list 'v*' | sort -V | grep -vE '\-(beta|rc)' | tail -n 1)
+      #     BASE_TAG=$(git tag --list 'v*' | sort -V | grep -vE '\-(beta|rc)' | tail -n 1)
 
-          if [[ -z "$BASE_TAG" ]]; then
-            BASE_TAG="v0.0.0"
-          fi
+      #     if [[ -z "$BASE_TAG" ]]; then
+      #       BASE_TAG="v0.0.0"
+      #     fi
 
-          echo "Using base tag: $BASE_TAG"
+      #     echo "Using base tag: $BASE_TAG"
 
-          VERSION_PART="${BASE_TAG#v}"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$(echo "$VERSION_PART" | awk -F. '{print $1, $2, $3}')"
+      #     VERSION_PART="${BASE_TAG#v}"
+      #     IFS='.' read -r MAJOR MINOR PATCH <<< "$(echo "$VERSION_PART" | awk -F. '{print $1, $2, $3}')"
 
-          MAJOR=${MAJOR:-0}
-          MINOR=${MINOR:-0}
-          PATCH=${PATCH:-0}
+      #     MAJOR=${MAJOR:-0}
+      #     MINOR=${MINOR:-0}
+      #     PATCH=${PATCH:-0}
 
-          echo "Parsed: MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
+      #     echo "Parsed: MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
 
-          COMMIT_MSG=$(git log -1 --pretty=%B || echo "")
-          echo "Commit message: $COMMIT_MSG"
+      #     COMMIT_MSG=$(git log -1 --pretty=%B || echo "")
+      #     echo "Commit message: $COMMIT_MSG"
 
-          if [[ "$COMMIT_MSG" == *"BREAKING CHANGE"* ]]; then
-            ((MAJOR++)); MINOR=0; PATCH=0
-          elif [[ "$COMMIT_MSG" == feat:* ]]; then
-            ((MINOR++)); PATCH=0
-          else
-            ((PATCH++))
-          fi
+      #     if [[ "$COMMIT_MSG" == *"BREAKING CHANGE"* ]]; then
+      #       ((MAJOR++)); MINOR=0; PATCH=0
+      #     elif [[ "$COMMIT_MSG" == feat:* ]]; then
+      #       ((MINOR++)); PATCH=0
+      #     else
+      #       ((PATCH++))
+      #     fi
 
-          BASE_VERSION="v$MAJOR.$MINOR.$PATCH"
+      #     BASE_VERSION="v$MAJOR.$MINOR.$PATCH"
 
-          if [[ "$BRANCH" == "beta" ]]; then
-            SUFFIX="beta"
-          elif [[ "$BRANCH" == "release-candidate" ]]; then
-            SUFFIX="rc"
-          else
-            SUFFIX=""
-          fi
+      #     if [[ "$BRANCH" == "beta" ]]; then
+      #       SUFFIX="beta"
+      #     elif [[ "$BRANCH" == "release-candidate" ]]; then
+      #       SUFFIX="rc"
+      #     else
+      #       SUFFIX=""
+      #     fi
 
-          if [[ -n "$SUFFIX" ]]; then
-            COUNT=$(git tag --list "$BASE_VERSION-$SUFFIX.*" | wc -l)
-            NEW_VERSION="$BASE_VERSION-$SUFFIX.$((COUNT+1))"
-          else
-            NEW_VERSION="$BASE_VERSION"
-          fi
+      #     if [[ -n "$SUFFIX" ]]; then
+      #       COUNT=$(git tag --list "$BASE_VERSION-$SUFFIX.*" | wc -l)
+      #       NEW_VERSION="$BASE_VERSION-$SUFFIX.$((COUNT+1))"
+      #     else
+      #       NEW_VERSION="$BASE_VERSION"
+      #     fi
 
-          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-          echo "New version: $NEW_VERSION"
+      #     echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+      #     echo "New version: $NEW_VERSION"
 
   android:
     name: Build Android APK
@@ -155,6 +159,11 @@ jobs:
     name: GitHub Release with Changelog
     needs: [android, setup]
     runs-on: ubuntu-latest
+    if: |
+      github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/beta' ||
+      github.ref == 'refs/heads/release-candidate'
+
 
     steps:
       - name: Checkout repo
