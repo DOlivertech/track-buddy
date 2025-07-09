@@ -25,6 +25,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+      
+      - name: Run linter (non-blocking)
+        run: npm run lint || echo "::warning ::Linting failed, but continuing"
 
       - name: Run tests
         run: npm test
