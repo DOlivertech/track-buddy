@@ -861,7 +861,7 @@ export default function AccountScreen() {
                 <Text style={[styles.formLabel, { color: colors.text }]}>Email Address *</Text>
                 <TextInput
                   style={[styles.textInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                  placeholder="teammate@example.com"
+                  placeholder="Enter team member's email"
                   placeholderTextColor={colors.textTertiary}
                   value={memberForm.email}
                   onChangeText={(email) => setMemberForm({ ...memberForm, email })}
