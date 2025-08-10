@@ -45,6 +45,11 @@ export default function AccountScreen() {
     emoji: '',
     imageUrl: ''
   });
+  const [teamSessionForm, setTeamSessionForm] = useState({
+    name: '',
+    description: '',
+    trackId: ''
+  });
   const [inviteForm, setInviteForm] = useState({
     email: '',
     role: 'member' as TeamMember['role']

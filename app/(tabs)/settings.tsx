@@ -392,6 +392,88 @@ export default function Settings() {
             </TouchableOpacity>
           </View>
         </View>
+
+        <View style={[styles.settingItem, { backgroundColor: colors.surface }]}>
+          <View style={styles.settingHeader}>
+            <Eye size={20} color={colors.textSecondary} />
+            <Text style={[styles.settingLabel, { color: colors.text }]}>Visibility Unit</Text>
+          </View>
+          <View style={styles.buttonGroup}>
+            <TouchableOpacity
+              style={[
+                styles.unitButton,
+                { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
+                settings.visibilityUnit === 'km' && { backgroundColor: colors.primary, borderColor: colors.primary }
+              ]}
+              onPress={() => handleVisibilityUnitChange('km')}
+            >
+              <Text style={[
+                styles.unitButtonText,
+                { color: colors.textSecondary },
+                settings.visibilityUnit === 'km' && { color: colors.primaryText }
+              ]}>
+                km
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.unitButton,
+                { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
+                settings.visibilityUnit === 'miles' && { backgroundColor: colors.primary, borderColor: colors.primary }
+              ]}
+              onPress={() => handleVisibilityUnitChange('miles')}
+            >
+              <Text style={[
+                styles.unitButtonText,
+                { color: colors.textSecondary },
+                settings.visibilityUnit === 'miles' && { color: colors.primaryText }
+              ]}>
+                miles
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={[styles.settingItem, { backgroundColor: colors.surface }]}>
+          <View style={styles.settingHeader}>
+            <Gauge size={20} color={colors.textSecondary} />
+            <Text style={[styles.settingLabel, { color: colors.text }]}>Pressure Unit</Text>
+          </View>
+          <View style={styles.buttonGroup}>
+            <TouchableOpacity
+              style={[
+                styles.unitButton,
+                { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
+                settings.pressureUnit === 'hpa' && { backgroundColor: colors.primary, borderColor: colors.primary }
+              ]}
+              onPress={() => handlePressureUnitChange('hpa')}
+            >
+              <Text style={[
+                styles.unitButtonText,
+                { color: colors.textSecondary },
+                settings.pressureUnit === 'hpa' && { color: colors.primaryText }
+              ]}>
+                hPa
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.unitButton,
+                { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
+                settings.pressureUnit === 'inhg' && { backgroundColor: colors.primary, borderColor: colors.primary }
+              ]}
+              onPress={() => handlePressureUnitChange('inhg')}
+            >
+              <Text style={[
+                styles.unitButtonText,
+                { color: colors.textSecondary },
+                settings.pressureUnit === 'inhg' && { color: colors.primaryText }
+              ]}>
+                inHg
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       <View style={styles.section}>
