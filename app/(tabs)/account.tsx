@@ -24,30 +24,7 @@ import { userService } from '@/services/userService';
 import { authService } from '@/services/authService';
 import { Team, TeamMember, TeamRole } from '@/types/team';
 import { SessionMetadata } from '@/types/user';
-import { 
-  User, 
-  Settings, 
-  Users, 
-  Crown, 
-  Shield, 
-  Car, 
-  UserCheck,
-  Plus, 
-  RefreshCcw, 
-  Mail, 
-  Phone,
-  Globe,
-  ChevronRight,
-  Trash2,
-  Edit3,
-  Camera,
-  Upload,
-  X,
-  Check,
-  AlertTriangle,
-  Zap,
-  FileText
-} from 'lucide-react-native';
+import { User, Settings, Users, Crown, Shield, Car, UserCheck, Plus, RefreshCcw, Mail, Phone, Globe, ChevronRight, Trash2, CreditCard as Edit3, Camera, Upload, X, Check, TriangleAlert as AlertTriangle, Zap, FileText } from 'lucide-react-native';
 
 export default function AccountScreen() {
   const { colors } = useTheme();
