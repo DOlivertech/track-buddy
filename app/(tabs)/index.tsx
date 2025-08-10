@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { WeatherData, UserSettings } from '@/types/weather';
@@ -201,7 +202,7 @@ export default function CurrentWeatherScreen() {
                   <Image
                     source={{ uri: user.profileImage }}
                     style={styles.avatarImage}
-                    resizeMode="cover"
+                    contentFit="cover"
                   />
                 ) : (
                   <User size={20} color={colors.primaryText} />

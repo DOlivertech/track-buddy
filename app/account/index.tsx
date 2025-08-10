@@ -7,8 +7,9 @@ import {
   TouchableOpacity, 
   TextInput, 
   Modal,
-  Image
+  Switch
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';

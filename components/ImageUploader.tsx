@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert } from 'react-native';
+import { Image } from 'expo-image';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Camera, Upload, X, User } from 'lucide-react-native';
 
