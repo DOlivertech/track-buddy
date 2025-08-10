@@ -45,11 +45,6 @@ export default function AccountScreen() {
     emoji: '',
     imageUrl: ''
   });
-  const [teamSessionForm, setTeamSessionForm] = useState({
-    name: '',
-    description: '',
-    trackId: ''
-  });
   const [inviteForm, setInviteForm] = useState({
     email: '',
     role: 'member' as TeamMember['role']
@@ -1299,6 +1294,18 @@ const styles = StyleSheet.create({
   teamSessions: {
     gap: 8,
   },
+  teamSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  addSessionButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyTeamSessions: {
     alignItems: 'center',
     paddingVertical: 20,
@@ -1344,6 +1351,25 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     fontWeight: '500',
   },
+  sessionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  editSessionButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteSessionButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   loadSessionButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -1353,6 +1379,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter-Bold',
     fontWeight: '700',
+  },
+  createTeamContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  createTeamButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  createTeamButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Bold',
+    fontWeight: '700',
+  },
+  editTeamButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  pickerText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    fontWeight: '500',
   },
   modalContainer: {
     flex: 1,
