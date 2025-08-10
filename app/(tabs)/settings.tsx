@@ -28,7 +28,9 @@ import {
   Download,
   Trash2, 
   TriangleAlert as AlertTriangle,
-  Users
+  Users,
+  Eye,
+  Gauge
 } from 'lucide-react-native';
 import { sessionService } from '@/services/sessionService';
 

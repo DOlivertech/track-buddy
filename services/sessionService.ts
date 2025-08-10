@@ -105,6 +105,8 @@ class SessionService {
           temperatureUnit: 'celsius',
           windSpeedUnit: 'kmh',
           precipitationUnit: 'mm',
+          visibilityUnit: 'km',
+          pressureUnit: 'hpa',
           selectedTrack: 'silverstone'
         },
         favorites: [],
