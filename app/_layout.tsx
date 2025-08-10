@@ -5,6 +5,7 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useFonts } from 'expo-font';
 import { SplashScreen } from 'expo-router';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { UserProvider } from '@/contexts/UserContext';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -37,13 +38,15 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <Stack screenOptions={{ headerShown: false }} initialRouteName="splash">
-        <Stack.Screen name="splash" />
-        <Stack.Screen name="sessions" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
+      <UserProvider>
+        <Stack screenOptions={{ headerShown: false }} initialRouteName="splash">
+          <Stack.Screen name="splash" />
+          <Stack.Screen name="sessions" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="auto" />
+      </UserProvider>
     </ThemeProvider>
   );
 }
