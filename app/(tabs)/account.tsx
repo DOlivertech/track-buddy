@@ -7,24 +7,34 @@ import {
   TouchableOpacity, 
   TextInput, 
   Modal,
-  Image,
-  Switch,
-  Alert
+  Switch
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useCustomAlert } from '@/components/CustomAlert';
 import { useUser } from '@/contexts/UserContext';
+import { useCustomAlert } from '@/components/CustomAlert';
 import { ImageUploader } from '@/components/ImageUploader';
-import { CountryPicker } from 'react-native-country-picker-modal';
 import { teamService } from '@/services/teamService';
-import { sessionService } from '@/services/sessionService';
-import { userService } from '@/services/userService';
-import { authService } from '@/services/authService';
-import { Team, TeamMember, TeamRole } from '@/types/team';
-import { SessionMetadata } from '@/types/user';
-import { User, Settings, Users, Crown, Shield, Car, UserCheck, Plus, RefreshCcw, Mail, Phone, Globe, ChevronRight, Trash2, CreditCard as Edit3, Camera, Upload, X, Check, TriangleAlert as AlertTriangle, Zap, FileText } from 'lucide-react-native';
+import { apiService } from '@/services/apiService';
+import { Team, TeamMember } from '@/types/team';
+import { 
+  User, 
+  Settings, 
+  Users, 
+  Plus, 
+  RefreshCcw, 
+  Crown, 
+  Shield, 
+  Car, 
+  UserCheck,
+  Mail,
+  Phone,
+  Trash2,
+  CreditCard as Edit3,
+  ChevronRight,
+  AlertTriangle
+} from 'lucide-react-native';
 
 export default function AccountScreen() {
   const { colors } = useTheme();
@@ -32,37 +42,26 @@ export default function AccountScreen() {
   const { user, updateUser } = useUser();
   const { showAlert, AlertComponent } = useCustomAlert();
   const [teams, setTeams] = useState<Team[]>([]);
-  const [teamSessions, setTeamSessions] = useState<{ [teamId: string]: SessionMetadata[] }>({});
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  
-  // Profile editing state
-  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [teamModalVisible, setTeamModalVisible] = useState(false);
+  const [inviteModalVisible, setInviteModalVisible] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [profileForm, setProfileForm] = useState({
     name: '',
     email: '',
-    phoneNumber: '',
-    countryCode: 'US',
+    phone: '',
     profileImage: ''
   });
-  const [showCountryPicker, setShowCountryPicker] = useState(false);
-  
-  // Team creation state
-  const [createTeamModalVisible, setCreateTeamModalVisible] = useState(false);
   const [teamForm, setTeamForm] = useState({
     name: '',
     description: '',
     emoji: '',
     imageUrl: ''
   });
-  
-  // Team member management state
-  const [memberModalVisible, setMemberModalVisible] = useState(false);
-  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [memberForm, setMemberForm] = useState({
+  const [inviteForm, setInviteForm] = useState({
     email: '',
-    role: 'team_member' as TeamRole
+    role: 'member' as TeamMember['role']
   });
 
   useFocusEffect(
@@ -73,38 +72,17 @@ export default function AccountScreen() {
 
   const loadData = async () => {
     try {
-      console.log('👤 [Account] Starting loadData...');
-      
-      // Load user teams
       const userTeams = await teamService.getUserTeams();
-      console.log('👤 [Account] Loaded teams:', userTeams.length);
       setTeams(userTeams);
       
-      // Load team sessions for each team
-      const sessionsData: { [teamId: string]: SessionMetadata[] } = {};
-      for (const team of userTeams) {
-        try {
-          const sessions = await sessionService.getTeamSessions(team.id);
-          sessionsData[team.id] = sessions;
-          console.log(`👤 [Account] Loaded ${sessions.length} sessions for team ${team.name}`);
-        } catch (error) {
-          console.error(`Error loading sessions for team ${team.id}:`, error);
-          sessionsData[team.id] = [];
-        }
-      }
-      setTeamSessions(sessionsData);
-      
-      // Initialize profile form with current user data
       if (user) {
         setProfileForm({
           name: user.name || '',
           email: user.email || '',
-          phoneNumber: user.phoneNumber || '',
-          countryCode: user.countryCode || 'US',
+          phone: '', // Will be added to user type later
           profileImage: user.profileImage || ''
         });
       }
-      
     } catch (error) {
       console.error('Error loading account data:', error);
     } finally {
@@ -113,63 +91,64 @@ export default function AccountScreen() {
   };
 
   const handleRefresh = async () => {
-    setRefreshing(true);
     await loadData();
-    setRefreshing(false);
   };
 
-  const openEditProfile = () => {
+  const openProfileModal = () => {
     if (user) {
       setProfileForm({
         name: user.name || '',
         email: user.email || '',
-        phoneNumber: user.phoneNumber || '',
-        countryCode: user.countryCode || 'US',
+        phone: '', // Will be added to user type later
         profileImage: user.profileImage || ''
       });
     }
-    setEditingProfile(true);
+    setProfileModalVisible(true);
+  };
+
+  const closeProfileModal = () => {
+    setProfileModalVisible(false);
+    setProfileForm({
+      name: '',
+      email: '',
+      phone: '',
+      profileImage: ''
+    });
   };
 
   const saveProfile = async () => {
     if (!profileForm.name.trim()) {
-      showAlert('Error', 'Name is required.', [{ text: 'OK' }]);
+      showAlert('Error', 'Please enter your name.', [{ text: 'OK' }]);
       return;
     }
 
     try {
-      const updatedUser = await updateUser({
+      await updateUser({
         name: profileForm.name.trim(),
         email: profileForm.email.trim() || undefined,
-        phoneNumber: profileForm.phoneNumber.trim() || undefined,
-        countryCode: profileForm.countryCode,
         profileImage: profileForm.profileImage || undefined
       });
-
-      if (updatedUser) {
-        setEditingProfile(false);
-        showAlert('Success', 'Profile updated successfully!', [{ text: 'OK' }]);
-      } else {
-        showAlert('Error', 'Failed to update profile.', [{ text: 'OK' }]);
-      }
+      
+      closeProfileModal();
+      showAlert('Success', 'Profile updated successfully!', [{ text: 'OK' }]);
     } catch (error) {
       console.error('Error updating profile:', error);
       showAlert('Error', 'Failed to update profile. Please try again.', [{ text: 'OK' }]);
     }
   };
 
-  const openCreateTeamModal = () => {
+  const openTeamModal = () => {
     setTeamForm({
       name: '',
       description: '',
       emoji: '',
       imageUrl: ''
     });
-    setCreateTeamModalVisible(true);
+    setTeamModalVisible(true);
   };
 
-  const closeCreateTeamModal = () => {
-    setCreateTeamModalVisible(false);
+  const closeTeamModal = () => {
+    setTeamModalVisible(false);
     setTeamForm({
       name: '',
       description: '',
@@ -178,172 +157,89 @@ export default function AccountScreen() {
     });
   };
 
-  const createTeam = async () => {
+  const saveTeam = async () => {
     if (!teamForm.name.trim()) {
-      showAlert('Error', 'Team name is required.', [{ text: 'OK' }]);
+      showAlert('Error', 'Please enter a team name.', [{ text: 'OK' }]);
       return;
     }
 
     try {
-      const newTeam = await teamService.createTeam({
+      await teamService.createTeam({
         name: teamForm.name.trim(),
         description: teamForm.description.trim() || undefined,
         emoji: teamForm.emoji.trim() || undefined,
         imageUrl: teamForm.imageUrl.trim() || undefined
       });
-
-      closeCreateTeamModal();
+      
+      closeTeamModal();
       await loadData();
-      showAlert('Success', `Team "${newTeam.name}" created successfully! You are now the Team Admin.`, [{ text: 'OK' }]);
+      showAlert('Success', 'Team created successfully!', [{ text: 'OK' }]);
     } catch (error) {
       console.error('Error creating team:', error);
       showAlert('Error', 'Failed to create team. Please try again.', [{ text: 'OK' }]);
     }
   };
 
-  const openMemberModal = (team: Team, member?: TeamMember) => {
+  const openInviteModal = (team: Team) => {
     setSelectedTeam(team);
-    if (member) {
-      setEditingMember(member);
-      setMemberForm({
-        email: member.email,
-        role: member.role
-      });
-    } else {
-      setEditingMember(null);
-      setMemberForm({
-        email: '',
-        role: 'team_member'
-      });
-    }
-    setMemberModalVisible(true);
+    setInviteForm({
+      email: '',
+      role: 'member'
+    });
+    setInviteModalVisible(true);
   };
 
-  const closeMemberModal = () => {
-    setMemberModalVisible(false);
-    setEditingMember(null);
+  const closeInviteModal = () => {
+    setInviteModalVisible(false);
     setSelectedTeam(null);
-    setMemberForm({
+    setInviteForm({
       email: '',
-      role: 'team_member'
+      role: 'member'
     });
   };
 
-  const saveMember = async () => {
-    if (!selectedTeam) return;
+  const sendInvite = async () => {
+    if (!inviteForm.email.trim() || !selectedTeam) {
+      showAlert('Error', 'Please enter an email address.', [{ text: 'OK' }]);
+      return;
+    }
 
-    if (editingMember) {
-      // Update existing member
-      if (!memberForm.role) {
-        showAlert('Error', 'Please select a role.', [{ text: 'OK' }]);
-        return;
-      }
-
-      try {
-        await teamService.updateTeamMember(selectedTeam.id, editingMember.id, {
-          role: memberForm.role
-        });
-        closeMemberModal();
-        await loadData();
-        showAlert('Success', 'Team member updated successfully!', [{ text: 'OK' }]);
-      } catch (error) {
-        console.error('Error updating team member:', error);
-        showAlert('Error', 'Failed to update team member.', [{ text: 'OK' }]);
-      }
-    } else {
-      // Add new member
-      if (!memberForm.email.trim()) {
-        showAlert('Error', 'Email address is required.', [{ text: 'OK' }]);
-        return;
-      }
-
-      try {
-        await teamService.inviteTeamMember(selectedTeam.id, memberForm.email.trim(), memberForm.role);
-        closeMemberModal();
+    try {
+      const success = await teamService.addTeamMember(
+        selectedTeam.id,
+        inviteForm.email.trim(),
+        inviteForm.role
+      );
+      
+      if (success) {
+        closeInviteModal();
         await loadData();
         showAlert('Success', 'Team invitation sent successfully!', [{ text: 'OK' }]);
-      } catch (error) {
-        console.error('Error inviting team member:', error);
-        if (error.message.includes('SMTP')) {
-          showAlert(
-            'Email Service Required',
-            'Email invitations require SMTP configuration on the backend server. In demo mode, invitations appear to work but emails are not actually sent.',
-            [{ text: 'OK' }]
-          );
-        } else {
-          showAlert('Error', 'Failed to send team invitation. Please try again.', [{ text: 'OK' }]);
-        }
-      }
-    }
-  };
-
-  const removeMember = async (team: Team, member: TeamMember) => {
-    showAlert(
-      'Remove Team Member',
-      `Are you sure you want to remove ${member.name || member.email} from ${team.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await teamService.removeTeamMember(team.id, member.id);
-              await loadData();
-              showAlert('Success', 'Team member removed successfully.', [{ text: 'OK' }]);
-            } catch (error) {
-              console.error('Error removing team member:', error);
-              showAlert('Error', 'Failed to remove team member.', [{ text: 'OK' }]);
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  const loadTeamSession = async (teamId: string, sessionId: string) => {
-    try {
-      const success = await sessionService.loadTeamSession(teamId, sessionId);
-      if (success) {
-        router.replace('/(tabs)/');
       } else {
-        showAlert('Error', 'Failed to load team session.', [{ text: 'OK' }]);
+        showAlert('Error', 'Failed to send invitation. Please try again.', [{ text: 'OK' }]);
       }
     } catch (error) {
-      console.error('Error loading team session:', error);
-      showAlert('Error', 'Failed to load team session.', [{ text: 'OK' }]);
+      console.error('Error sending invite:', error);
+      showAlert('Error', 'Failed to send invitation. Please try again.', [{ text: 'OK' }]);
     }
   };
 
-  const getRoleIcon = (role: TeamRole) => {
+  const getRoleIcon = (role: TeamMember['role']) => {
     switch (role) {
-      case 'team_admin':
-        return <Crown size={16} color="#3B82F6" />;
+      case 'admin':
+        return <Crown size={16} color={colors.warning} />;
       case 'crew_chief':
-        return <Shield size={16} color="#F59E0B" />;
+        return <Shield size={16} color={colors.primary} />;
       case 'driver':
-        return <Car size={16} color="#EF4444" />;
+        return <Car size={16} color={colors.success} />;
       default:
-        return <UserCheck size={16} color="#64748B" />;
+        return <UserCheck size={16} color={colors.textSecondary} />;
     }
   };
 
-  const getRoleColor = (role: TeamRole) => {
+  const getRoleLabel = (role: TeamMember['role']) => {
     switch (role) {
-      case 'team_admin':
-        return '#3B82F6';
-      case 'crew_chief':
-        return '#F59E0B';
-      case 'driver':
-        return '#EF4444';
-      default:
-        return '#64748B';
-    }
-  };
-
-  const getRoleLabel = (role: TeamRole) => {
-    switch (role) {
-      case 'team_admin':
+      case 'admin':
         return 'Team Admin';
       case 'crew_chief':
         return 'Crew Chief';
@@ -352,42 +248,6 @@ export default function AccountScreen() {
       default:
         return 'Team Member';
     }
-  };
-
-  const canManageMembers = (team: Team) => {
-    if (!user) return false;
-    const userMember = team.members.find(m => m.email === user.email);
-    return userMember?.role === 'team_admin';
-  };
-
-  const canEditMembers = (team: Team) => {
-    if (!user) return false;
-    const userMember = team.members.find(m => m.email === user.email);
-    return userMember?.role === 'team_admin' || userMember?.role === 'crew_chief';
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const formatPhoneNumber = (phoneNumber: string, countryCode: string) => {
-    if (!phoneNumber) return '';
-    // This is a simplified format - in production you'd want proper phone number formatting
-    return `+${getCountryCallingCode(countryCode)} ${phoneNumber}`;
-  };
-
-  const getCountryCallingCode = (countryCode: string) => {
-    // Simplified mapping - in production use a proper library
-    const codes: { [key: string]: string } = {
-      'US': '1', 'CA': '1', 'GB': '44', 'DE': '49', 'FR': '33', 'IT': '39', 
-      'ES': '34', 'AU': '61', 'JP': '81', 'CN': '86', 'IN': '91', 'BR': '55'
-    };
-    return codes[countryCode] || '1';
   };
 
   if (loading) {
@@ -417,261 +277,153 @@ export default function AccountScreen() {
 
       <ScrollView style={styles.content}>
         {/* Profile Section */}
-        <View style={[styles.section, { backgroundColor: colors.surface }]}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <User size={20} color={colors.primary} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Profile</Text>
-            </View>
-            <TouchableOpacity
-              style={[styles.editButton, { backgroundColor: colors.primary }]}
-              onPress={openEditProfile}
-            >
-              <Edit3 size={16} color={colors.primaryText} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.profileContent}>
-            <View style={styles.profileImageContainer}>
-              {user?.profileImage ? (
-                <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
-              ) : (
-                <View style={[styles.profileImagePlaceholder, { backgroundColor: colors.primary }]}>
-                  <User size={32} color={colors.primaryText} />
-                </View>
-              )}
-            </View>
-            
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Profile</Text>
+          <TouchableOpacity
+            style={[styles.profileCard, { backgroundColor: colors.surface }]}
+            onPress={openProfileModal}
+            activeOpacity={0.7}
+          >
             <View style={styles.profileInfo}>
-              <Text style={[styles.profileName, { color: colors.text }]}>{user?.name || 'No name set'}</Text>
-              {user?.email && (
-                <View style={styles.profileDetail}>
-                  <Mail size={14} color={colors.textSecondary} />
-                  <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>{user.email}</Text>
-                </View>
-              )}
-              {user?.phoneNumber && (
-                <View style={styles.profileDetail}>
-                  <Phone size={14} color={colors.textSecondary} />
-                  <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>
-                    {formatPhoneNumber(user.phoneNumber, user.countryCode || 'US')}
-                  </Text>
-                </View>
-              )}
-              <View style={styles.profileDetail}>
-                <Globe size={14} color={colors.textSecondary} />
-                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>
-                  Member since {formatDate(user?.createdAt || new Date().toISOString())}
+              <View style={[styles.profileAvatar, { backgroundColor: colors.primary }]}>
+                {user?.profileImage ? (
+                  <Text style={styles.avatarText}>👤</Text>
+                ) : (
+                  <User size={24} color={colors.primaryText} />
+                )}
+              </View>
+              <View style={styles.profileDetails}>
+                <Text style={[styles.profileName, { color: colors.text }]}>
+                  {user?.name || 'Racing Driver'}
+                </Text>
+                <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
+                  {user?.email || 'No email set'}
                 </Text>
               </View>
             </View>
-          </View>
+            <ChevronRight size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
 
-        {/* Teams & Collaboration Section */}
-        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+        {/* Teams Section */}
+        <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <Users size={20} color={colors.primary} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Teams & Collaboration</Text>
-            </View>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Racing Teams</Text>
             <TouchableOpacity
-              style={[styles.createTeamButton, { backgroundColor: colors.primary }]}
-              onPress={openCreateTeamModal}
+              style={[styles.addTeamButton, { backgroundColor: colors.primary }]}
+              onPress={openTeamModal}
             >
               <Plus size={16} color={colors.primaryText} />
             </TouchableOpacity>
           </View>
-
+          
           {teams.length === 0 ? (
-            <View style={styles.emptyTeams}>
+            <View style={[styles.emptyTeams, { backgroundColor: colors.surface }]}>
               <Users size={48} color={colors.textTertiary} />
               <Text style={[styles.emptyTeamsTitle, { color: colors.text }]}>No Teams Yet</Text>
-              <Text style={[styles.emptyTeamsText, { color: colors.textSecondary }]}>
-                Create or join a team to collaborate with other racers and share data.
+              <Text style={[styles.emptyTeamsSubtext, { color: colors.textSecondary }]}>
+                Create or join racing teams to collaborate on setups and share data.
               </Text>
-              <TouchableOpacity
-                style={[styles.createFirstTeamButton, { backgroundColor: colors.primary }]}
-                onPress={openCreateTeamModal}
-              >
-                <Plus size={20} color={colors.primaryText} />
-                <Text style={[styles.createFirstTeamButtonText, { color: colors.primaryText }]}>Create Team</Text>
-              </TouchableOpacity>
             </View>
           ) : (
-            teams.map((team) => {
-              const userMember = team.members.find(m => m.email === user?.email);
-              const userRole = userMember?.role || 'team_member';
-              const sessions = teamSessions[team.id] || [];
-              
-              return (
-                <View key={team.id} style={[styles.teamCard, { backgroundColor: colors.surfaceSecondary }]}>
-                  <View style={styles.teamHeader}>
-                    <View style={styles.teamInfo}>
-                      <View style={styles.teamTitleRow}>
-                        {team.emoji && (
-                          <Text style={styles.teamEmoji}>{team.emoji}</Text>
-                        )}
-                        <Text style={[styles.teamName, { color: colors.text }]}>{team.name}</Text>
-                        <View style={[styles.roleBadge, { backgroundColor: getRoleColor(userRole) }]}>
-                          {getRoleIcon(userRole)}
-                          <Text style={styles.roleBadgeText}>{getRoleLabel(userRole)}</Text>
-                        </View>
-                      </View>
-                      {team.description && (
-                        <Text style={[styles.teamDescription, { color: colors.textSecondary }]}>
-                          {team.description}
-                        </Text>
+            teams.map((team) => (
+              <View key={team.id} style={[styles.teamCard, { backgroundColor: colors.surface }]}>
+                <View style={styles.teamHeader}>
+                  <View style={styles.teamInfo}>
+                    <View style={styles.teamTitleRow}>
+                      {team.emoji ? (
+                        <Text style={styles.teamEmoji}>{team.emoji}</Text>
+                      ) : (
+                        <Users size={20} color={colors.primary} />
                       )}
-                      <View style={styles.teamMeta}>
-                        <Text style={[styles.teamMetaText, { color: colors.textTertiary }]}>
-                          {team.members.length} member{team.members.length === 1 ? '' : 's'} • {sessions.length} session{sessions.length === 1 ? '' : 's'}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  {/* Team Members */}
-                  <View style={styles.teamMembers}>
-                    <View style={styles.membersHeader}>
-                      <Text style={[styles.membersTitle, { color: colors.text }]}>Team Members</Text>
-                      {canManageMembers(team) && (
-                        <TouchableOpacity
-                          style={[styles.addMemberButton, { backgroundColor: colors.primary }]}
-                          onPress={() => openMemberModal(team)}
-                        >
-                          <Plus size={14} color={colors.primaryText} />
-                        </TouchableOpacity>
+                      <Text style={[styles.teamName, { color: colors.text }]}>{team.name}</Text>
+                      {team.isDemo && (
+                        <View style={[styles.demoBadge, { backgroundColor: colors.warning }]}>
+                          <Text style={styles.demoBadgeText}>DEMO</Text>
+                        </View>
                       )}
                     </View>
-                    
-                    {team.members.map((member) => (
-                      <View key={member.id} style={styles.memberItem}>
-                        <View style={styles.memberInfo}>
-                          <View style={styles.memberAvatar}>
-                            {member.profileImage ? (
-                              <Image source={{ uri: member.profileImage }} style={styles.memberAvatarImage} />
-                            ) : (
-                              <View style={[styles.memberAvatarPlaceholder, { backgroundColor: colors.primary }]}>
-                                <User size={16} color={colors.primaryText} />
-                              </View>
-                            )}
-                          </View>
-                          <View style={styles.memberDetails}>
-                            <Text style={[styles.memberName, { color: colors.text }]}>
-                              {member.name || member.email}
-                            </Text>
-                            <View style={styles.memberMeta}>
-                              {getRoleIcon(member.role)}
-                              <Text style={[styles.memberRole, { color: colors.textSecondary }]}>
-                                {getRoleLabel(member.role)}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                        
-                        {canEditMembers(team) && member.email !== user?.email && (
-                          <View style={styles.memberActions}>
-                            <TouchableOpacity
-                              style={[styles.memberActionButton, { backgroundColor: colors.surface }]}
-                              onPress={() => openMemberModal(team, member)}
-                            >
-                              <Edit3 size={14} color={colors.text} />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={[styles.memberActionButton, { backgroundColor: colors.surface }]}
-                              onPress={() => removeMember(team, member)}
-                            >
-                              <Trash2 size={14} color={colors.error} />
-                            </TouchableOpacity>
-                          </View>
-                        )}
-                      </View>
-                    ))}
-                  </View>
-
-                  {/* Team Sessions */}
-                  <View style={styles.teamSessions}>
-                    <Text style={[styles.sessionsTitle, { color: colors.text }]}>Team Sessions</Text>
-                    {sessions.length === 0 ? (
-                      <Text style={[styles.noSessionsText, { color: colors.textSecondary }]}>
-                        No team sessions available
-                      </Text>
-                    ) : (
-                      sessions.slice(0, 3).map((session) => (
-                        <TouchableOpacity
-                          key={session.id}
-                          style={[styles.sessionItem, { backgroundColor: colors.surface }]}
-                          onPress={() => loadTeamSession(team.id, session.id)}
-                        >
-                          <View style={styles.sessionInfo}>
-                            {session.emoji && (
-                              <Text style={styles.sessionEmoji}>{session.emoji}</Text>
-                            )}
-                            <View style={styles.sessionDetails}>
-                              <Text style={[styles.sessionName, { color: colors.text }]}>{session.name}</Text>
-                              <Text style={[styles.sessionDate, { color: colors.textSecondary }]}>
-                                Last used {formatDate(session.lastAccessedAt)}
-                              </Text>
-                            </View>
-                          </View>
-                          <ChevronRight size={16} color={colors.textSecondary} />
-                        </TouchableOpacity>
-                      ))
-                    )}
-                    {sessions.length > 3 && (
-                      <Text style={[styles.moreSessionsText, { color: colors.textTertiary }]}>
-                        +{sessions.length - 3} more session{sessions.length - 3 === 1 ? '' : 's'}
+                    {team.description && (
+                      <Text style={[styles.teamDescription, { color: colors.textSecondary }]}>
+                        {team.description}
                       </Text>
                     )}
+                    <View style={styles.teamMeta}>
+                      <Text style={[styles.teamMemberCount, { color: colors.textTertiary }]}>
+                        {team.members.length} member{team.members.length === 1 ? '' : 's'}
+                      </Text>
+                      <Text style={[styles.teamSessionCount, { color: colors.textTertiary }]}>
+                        {team.sessions.length} session{team.sessions.length === 1 ? '' : 's'}
+                      </Text>
+                    </View>
                   </View>
+                  
+                  {teamService.canManageMembers(team) && !team.isDemo && (
+                    <TouchableOpacity
+                      style={[styles.inviteButton, { backgroundColor: colors.primary }]}
+                      onPress={() => openInviteModal(team)}
+                    >
+                      <Plus size={16} color={colors.primaryText} />
+                    </TouchableOpacity>
+                  )}
                 </View>
-              );
-            })
+
+                <View style={styles.teamMembers}>
+                  {team.members.slice(0, 3).map((member) => (
+                    <View key={member.id} style={styles.memberItem}>
+                      <View style={styles.memberInfo}>
+                        <View style={[styles.memberAvatar, { backgroundColor: colors.surfaceSecondary }]}>
+                          <Text style={styles.memberInitial}>
+                            {member.name.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View style={styles.memberDetails}>
+                          <Text style={[styles.memberName, { color: colors.text }]}>{member.name}</Text>
+                          <View style={styles.memberRole}>
+                            {getRoleIcon(member.role)}
+                            <Text style={[styles.memberRoleText, { color: colors.textSecondary }]}>
+                              {getRoleLabel(member.role)}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+                  
+                  {team.members.length > 3 && (
+                    <Text style={[styles.moreMembers, { color: colors.textTertiary }]}>
+                      +{team.members.length - 3} more
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))
           )}
         </View>
 
-        {/* Account Settings Section */}
-        <View style={[styles.section, { backgroundColor: colors.surface }]}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <Settings size={20} color={colors.primary} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Account Settings</Text>
-            </View>
+        {/* Coming Soon Notice */}
+        <View style={[styles.comingSoonSection, { backgroundColor: colors.surface }]}>
+          <View style={styles.comingSoonHeader}>
+            <AlertTriangle size={20} color={colors.warning} />
+            <Text style={[styles.comingSoonTitle, { color: colors.text }]}>Team Features Coming Soon</Text>
           </View>
-
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => router.push('/sessions')}
-          >
-            <View style={styles.settingInfo}>
-              <FileText size={20} color={colors.textSecondary} />
-              <Text style={[styles.settingLabel, { color: colors.text }]}>Manage Sessions</Text>
-            </View>
-            <ChevronRight size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => authService.signOut()}
-          >
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { color: colors.error }]}>Sign Out</Text>
-            </View>
-          </TouchableOpacity>
+          <Text style={[styles.comingSoonText, { color: colors.textSecondary }]}>
+            Full team collaboration features including real-time data sharing, member management, 
+            and team sessions are currently in development and will be available in a future update.
+          </Text>
         </View>
       </ScrollView>
 
-      {/* Profile Edit Modal */}
+      {/* Profile Modal */}
       <Modal
-        visible={editingProfile}
+        visible={profileModalVisible}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setEditingProfile(false)}
+        onRequestClose={closeProfileModal}
       >
         <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setEditingProfile(false)}>
+            <TouchableOpacity onPress={closeProfileModal}>
               <Text style={[styles.modalCancel, { color: colors.textSecondary }]}>Cancel</Text>
             </TouchableOpacity>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Edit Profile</Text>
@@ -681,12 +433,11 @@ export default function AccountScreen() {
           </View>
 
           <ScrollView style={styles.modalContent}>
-            <View style={styles.formGroup}>
-              <Text style={[styles.formLabel, { color: colors.text }]}>Profile Picture</Text>
+            <View style={styles.imageSection}>
               <ImageUploader
-                currentImage={profileForm.profileImage}
-                onImageChange={(imageUri) => setProfileForm({ ...profileForm, profileImage: imageUri })}
-                maxSizeKB={5000} // 5MB limit
+                value={profileForm.profileImage}
+                onImageChange={(imageUri) => setProfileForm({ ...profileForm, profileImage: imageUri || '' })}
+                placeholder="Add profile picture"
               />
             </View>
 
@@ -716,64 +467,46 @@ export default function AccountScreen() {
 
             <View style={styles.formGroup}>
               <Text style={[styles.formLabel, { color: colors.text }]}>Phone Number</Text>
-              <View style={styles.phoneInputContainer}>
-                <TouchableOpacity
-                  style={[styles.countryButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                  onPress={() => setShowCountryPicker(true)}
-                >
-                  <Text style={[styles.countryCode, { color: colors.text }]}>
-                    +{getCountryCallingCode(profileForm.countryCode)}
-                  </Text>
-                </TouchableOpacity>
-                <TextInput
-                  style={[styles.phoneInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                  placeholder="Phone number"
-                  placeholderTextColor={colors.textTertiary}
-                  value={profileForm.phoneNumber}
-                  onChangeText={(phoneNumber) => setProfileForm({ ...profileForm, phoneNumber })}
-                  keyboardType="phone-pad"
-                />
-              </View>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+                placeholder="e.g., +1 555-123-4567 or +44 20 7946 0958"
+                placeholderTextColor={colors.textTertiary}
+                value={profileForm.phone}
+                onChangeText={(phone) => setProfileForm({ ...profileForm, phone })}
+                keyboardType="phone-pad"
+              />
               <Text style={[styles.helpText, { color: colors.textTertiary }]}>
-                Optional: Used for team communication and notifications
+                Include country code (e.g., +1 for US, +44 for UK)
               </Text>
             </View>
           </ScrollView>
         </View>
       </Modal>
 
-      {/* Create Team Modal */}
+      {/* Team Creation Modal */}
       <Modal
-        visible={createTeamModalVisible}
+        visible={teamModalVisible}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={closeCreateTeamModal}
+        onRequestClose={closeTeamModal}
       >
         <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={closeCreateTeamModal}>
+            <TouchableOpacity onPress={closeTeamModal}>
               <Text style={[styles.modalCancel, { color: colors.textSecondary }]}>Cancel</Text>
             </TouchableOpacity>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Create Team</Text>
-            <TouchableOpacity onPress={createTeam}>
+            <TouchableOpacity onPress={saveTeam}>
               <Text style={[styles.modalSave, { color: colors.primary }]}>Create</Text>
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalContent}>
-            <View style={styles.modalIntro}>
-              <Zap size={32} color={colors.primary} />
-              <Text style={[styles.modalIntroTitle, { color: colors.text }]}>Create Racing Team</Text>
-              <Text style={[styles.modalIntroText, { color: colors.textSecondary }]}>
-                Teams allow you to collaborate with other racers, share data, and work together on race weekends.
-              </Text>
-            </View>
-
             <View style={styles.formGroup}>
-              <Text style={[styles.formLabel, { color: colors.text }]}>Team Emoji (Optional)</Text>
+              <Text style={[styles.formLabel, { color: colors.text }]}>Team Emoji</Text>
               <TextInput
                 style={[styles.emojiInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                placeholder="🏁 Choose an emoji..."
+                placeholder="🏎️ Choose an emoji..."
                 placeholderTextColor={colors.textTertiary}
                 value={teamForm.emoji}
                 onChangeText={(emoji) => setTeamForm({ ...teamForm, emoji })}
@@ -785,7 +518,7 @@ export default function AccountScreen() {
               <Text style={[styles.formLabel, { color: colors.text }]}>Team Name *</Text>
               <TextInput
                 style={[styles.textInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                placeholder="e.g., Thunder Racing Team, Apex Motorsports..."
+                placeholder="e.g., Lightning Racing Team"
                 placeholderTextColor={colors.textTertiary}
                 value={teamForm.name}
                 onChangeText={(name) => setTeamForm({ ...teamForm, name })}
@@ -796,7 +529,7 @@ export default function AccountScreen() {
               <Text style={[styles.formLabel, { color: colors.text }]}>Description</Text>
               <TextInput
                 style={[styles.textAreaInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                placeholder="Describe your team's goals and racing activities..."
+                placeholder="Describe your racing team..."
                 placeholderTextColor={colors.textTertiary}
                 value={teamForm.description}
                 onChangeText={(description) => setTeamForm({ ...teamForm, description })}
@@ -819,100 +552,60 @@ export default function AccountScreen() {
                 Optional: Add a URL to your team logo or image
               </Text>
             </View>
-
-            <View style={[styles.roleInfoBox, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-              <Text style={[styles.roleInfoTitle, { color: colors.text }]}>Your Role</Text>
-              <View style={styles.roleInfoItem}>
-                <Crown size={16} color="#3B82F6" />
-                <Text style={[styles.roleInfoText, { color: colors.textSecondary }]}>
-                  <Text style={[styles.roleInfoBold, { color: colors.text }]}>Team Admin:</Text> You'll have full permissions to manage members, create sessions, and share data.
-                </Text>
-              </View>
-            </View>
           </ScrollView>
         </View>
       </Modal>
 
-      {/* Member Management Modal */}
+      {/* Team Invite Modal */}
       <Modal
-        visible={memberModalVisible}
+        visible={inviteModalVisible}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={closeMemberModal}
+        onRequestClose={closeInviteModal}
       >
         <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={closeMemberModal}>
+            <TouchableOpacity onPress={closeInviteModal}>
               <Text style={[styles.modalCancel, { color: colors.textSecondary }]}>Cancel</Text>
             </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
-              {editingMember ? 'Edit Member' : 'Add Team Member'}
-            </Text>
-            <TouchableOpacity onPress={saveMember}>
-              <Text style={[styles.modalSave, { color: colors.primary }]}>
-                {editingMember ? 'Save' : 'Invite'}
-              </Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Invite Member</Text>
+            <TouchableOpacity onPress={sendInvite}>
+              <Text style={[styles.modalSave, { color: colors.primary }]}>Send</Text>
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalContent}>
-            {!editingMember && (
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.text }]}>Email Address *</Text>
-                <TextInput
-                  style={[styles.textInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                  placeholder="teammate@example.com"
-                  placeholderTextColor={colors.textTertiary}
-                  value={memberForm.email}
-                  onChangeText={(email) => setMemberForm({ ...memberForm, email })}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-            )}
-
-            {editingMember && (
-              <View style={styles.editingMemberInfo}>
-                <View style={styles.editingMemberHeader}>
-                  <View style={styles.memberAvatar}>
-                    {editingMember.profileImage ? (
-                      <Image source={{ uri: editingMember.profileImage }} style={styles.memberAvatarImage} />
-                    ) : (
-                      <View style={[styles.memberAvatarPlaceholder, { backgroundColor: colors.primary }]}>
-                        <User size={20} color={colors.primaryText} />
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.editingMemberDetails}>
-                    <Text style={[styles.editingMemberName, { color: colors.text }]}>
-                      {editingMember.name || editingMember.email}
-                    </Text>
-                    <Text style={[styles.editingMemberEmail, { color: colors.textSecondary }]}>
-                      {editingMember.email}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            )}
+            <View style={styles.formGroup}>
+              <Text style={[styles.formLabel, { color: colors.text }]}>Email Address *</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+                placeholder="teammate@example.com"
+                placeholderTextColor={colors.textTertiary}
+                value={inviteForm.email}
+                onChangeText={(email) => setInviteForm({ ...inviteForm, email })}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
 
             <View style={styles.formGroup}>
               <Text style={[styles.formLabel, { color: colors.text }]}>Role</Text>
               <View style={styles.roleButtons}>
-                {(['driver', 'team_member', 'crew_chief'] as const).map((role) => (
+                {(['member', 'driver', 'crew_chief'] as const).map((role) => (
                   <TouchableOpacity
                     key={role}
                     style={[
                       styles.roleButton,
                       { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
-                      memberForm.role === role && { backgroundColor: getRoleColor(role), borderColor: getRoleColor(role) }
+                      inviteForm.role === role && { backgroundColor: colors.primary, borderColor: colors.primary }
                     ]}
-                    onPress={() => setMemberForm({ ...memberForm, role })}
+                    onPress={() => setInviteForm({ ...inviteForm, role })}
                   >
                     {getRoleIcon(role)}
                     <Text style={[
                       styles.roleButtonText,
                       { color: colors.text },
-                      memberForm.role === role && { color: '#FFFFFF' }
+                      inviteForm.role === role && { color: colors.primaryText }
                     ]}>
                       {getRoleLabel(role)}
                     </Text>
@@ -920,69 +613,9 @@ export default function AccountScreen() {
                 ))}
               </View>
             </View>
-
-            <View style={[styles.roleDescriptions, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
-              <Text style={[styles.roleDescriptionsTitle, { color: colors.text }]}>Role Permissions</Text>
-              
-              <View style={styles.roleDescription}>
-                <Car size={16} color="#EF4444" />
-                <View style={styles.roleDescriptionText}>
-                  <Text style={[styles.roleDescriptionTitle, { color: colors.text }]}>Driver</Text>
-                  <Text style={[styles.roleDescriptionDetail, { color: colors.textSecondary }]}>
-                    Access team sessions, contribute data, view shared information
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.roleDescription}>
-                <UserCheck size={16} color="#64748B" />
-                <View style={styles.roleDescriptionText}>
-                  <Text style={[styles.roleDescriptionTitle, { color: colors.text }]}>Team Member</Text>
-                  <Text style={[styles.roleDescriptionDetail, { color: colors.textSecondary }]}>
-                    Basic access to view team sessions and shared data
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.roleDescription}>
-                <Shield size={16} color="#F59E0B" />
-                <View style={styles.roleDescriptionText}>
-                  <Text style={[styles.roleDescriptionTitle, { color: colors.text }]}>Crew Chief</Text>
-                  <Text style={[styles.roleDescriptionDetail, { color: colors.textSecondary }]}>
-                    Create and manage team sessions, share data, edit member roles
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {!editingMember && (
-              <View style={[styles.invitationInfo, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <AlertTriangle size={20} color={colors.warning} />
-                <View style={styles.invitationInfoText}>
-                  <Text style={[styles.invitationInfoTitle, { color: colors.text }]}>Email Invitations</Text>
-                  <Text style={[styles.invitationInfoDetail, { color: colors.textSecondary }]}>
-                    Email invitations require SMTP configuration on the backend server. In demo mode, invitations appear to work but emails are not actually sent.
-                  </Text>
-                </View>
-              </View>
-            )}
           </ScrollView>
         </View>
       </Modal>
-
-      {/* Country Picker Modal */}
-      <CountryPicker
-        visible={showCountryPicker}
-        onSelect={(country) => {
-          setProfileForm({ ...profileForm, countryCode: country.cca2 });
-          setShowCountryPicker(false);
-        }}
-        onClose={() => setShowCountryPicker(false)}
-        withFilter
-        withFlag
-        withCallingCode
-        withEmoji
-      />
 
       <AlertComponent />
     </View>
@@ -1034,82 +667,80 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   section: {
+    marginBottom: 32,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    fontWeight: '700',
+  },
+  addTeamButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileCard: {
+    marginHorizontal: 20,
     borderRadius: 16,
     padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
-  },
-  editButton: {
-    padding: 8,
-    borderRadius: 8,
-  },
-  createTeamButton: {
-    padding: 8,
-    borderRadius: 8,
-  },
-  profileContent: {
+  profileInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
+    flex: 1,
   },
-  profileImageContainer: {
-    alignItems: 'center',
-  },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  profileImagePlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  profileAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  profileInfo: {
+  avatarText: {
+    fontSize: 24,
+  },
+  profileDetails: {
     flex: 1,
-    gap: 8,
   },
   profileName: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Inter-Bold',
     fontWeight: '700',
+    marginBottom: 4,
   },
-  profileDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  profileDetailText: {
+  profileEmail: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
     fontWeight: '500',
   },
   emptyTeams: {
+    marginHorizontal: 20,
+    borderRadius: 16,
+    padding: 40,
     alignItems: 'center',
-    paddingVertical: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   emptyTeamsTitle: {
     fontSize: 20,
@@ -1118,37 +749,33 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 8,
   },
-  emptyTeamsText: {
+  emptyTeamsSubtext: {
     fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    fontWeight: '400',
+    fontFamily: 'Inter-Medium',
+    fontWeight: '500',
     textAlign: 'center',
     lineHeight: 20,
-    marginBottom: 20,
-  },
-  createFirstTeamButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  createFirstTeamButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
   },
   teamCard: {
-    borderRadius: 12,
-    padding: 16,
+    marginHorizontal: 20,
     marginBottom: 16,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   teamHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 16,
   },
   teamInfo: {
     flex: 1,
+    marginRight: 12,
   },
   teamTitleRow: {
     flexDirection: 'row',
@@ -1165,15 +792,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     flex: 1,
   },
-  roleBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+  demoBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
-  roleBadgeText: {
+  demoBadgeText: {
     fontSize: 10,
     fontFamily: 'Inter-Bold',
     fontWeight: '700',
@@ -1184,42 +808,36 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     fontWeight: '400',
     lineHeight: 20,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   teamMeta: {
-    marginTop: 4,
+    flexDirection: 'row',
+    gap: 16,
   },
-  teamMetaText: {
+  teamMemberCount: {
     fontSize: 12,
     fontFamily: 'Inter-Medium',
     fontWeight: '500',
   },
-  teamMembers: {
-    marginBottom: 16,
+  teamSessionCount: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    fontWeight: '500',
   },
-  membersHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  membersTitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
-  },
-  addMemberButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
+  inviteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  teamMembers: {
+    gap: 12,
+  },
   memberItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'space-between',
   },
   memberInfo: {
     flexDirection: 'row',
@@ -1228,21 +846,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   memberAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  memberAvatarImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  memberAvatarPlaceholder: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  memberInitial: {
+    fontSize: 16,
+    fontFamily: 'Inter-Bold',
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   memberDetails: {
     flex: 1,
@@ -1251,99 +865,52 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Bold',
     fontWeight: '700',
+    marginBottom: 2,
   },
-  memberMeta: {
+  memberRole: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 2,
   },
-  memberRole: {
+  memberRoleText: {
     fontSize: 12,
     fontFamily: 'Inter-Medium',
     fontWeight: '500',
   },
-  memberActions: {
+  moreMembers: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  comingSoonSection: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  comingSoonHeader: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  memberActionButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  teamSessions: {
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  sessionsTitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
+    gap: 8,
     marginBottom: 12,
   },
-  noSessionsText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    fontWeight: '400',
-    fontStyle: 'italic',
-  },
-  sessionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  sessionInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  sessionEmoji: {
+  comingSoonTitle: {
     fontSize: 16,
-  },
-  sessionDetails: {
-    flex: 1,
-  },
-  sessionName: {
-    fontSize: 14,
     fontFamily: 'Inter-Bold',
     fontWeight: '700',
   },
-  sessionDate: {
-    fontSize: 11,
+  comingSoonText: {
+    fontSize: 14,
     fontFamily: 'Inter-Regular',
     fontWeight: '400',
-    marginTop: 2,
-  },
-  moreSessionsText: {
-    fontSize: 11,
-    fontFamily: 'Inter-Regular',
-    fontWeight: '400',
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-  },
-  settingInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  settingLabel: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    fontWeight: '500',
+    lineHeight: 20,
   },
   modalContainer: {
     flex: 1,
@@ -1375,23 +942,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
   },
-  modalIntro: {
+  imageSection: {
     alignItems: 'center',
     marginBottom: 32,
-  },
-  modalIntroTitle: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  modalIntroText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    fontWeight: '400',
-    textAlign: 'center',
-    lineHeight: 24,
   },
   formGroup: {
     marginBottom: 24,
@@ -1431,90 +984,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  phoneInputContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  countryButton: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  countryCode: {
-    fontSize: 16,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
-  },
-  phoneInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    fontWeight: '500',
-  },
   helpText: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
     fontWeight: '400',
     marginTop: 4,
-  },
-  roleInfoBox: {
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-  },
-  roleInfoTitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  roleInfoItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  roleInfoText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    fontWeight: '400',
-    lineHeight: 16,
-    flex: 1,
-  },
-  roleInfoBold: {
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
-  },
-  editingMemberInfo: {
-    marginBottom: 24,
-  },
-  editingMemberHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-  },
-  editingMemberDetails: {
-    flex: 1,
-  },
-  editingMemberName: {
-    fontSize: 16,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
-  },
-  editingMemberEmail: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    fontWeight: '400',
-    marginTop: 2,
   },
   roleButtons: {
     gap: 12,
@@ -1523,68 +997,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    padding: 16,
     borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
   },
   roleButtonText: {
     fontSize: 16,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
-  },
-  roleDescriptions: {
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    gap: 16,
-  },
-  roleDescriptionsTitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  roleDescription: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  roleDescriptionText: {
-    flex: 1,
-  },
-  roleDescriptionTitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  roleDescriptionDetail: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    fontWeight: '400',
-    lineHeight: 16,
-  },
-  invitationInfo: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-  },
-  invitationInfoText: {
-    flex: 1,
-  },
-  invitationInfoTitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Bold',
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  invitationInfoDetail: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    fontWeight: '400',
-    lineHeight: 16,
+    fontFamily: 'Inter-Medium',
+    fontWeight: '500',
   },
 });
