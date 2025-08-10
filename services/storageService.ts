@@ -15,6 +15,8 @@ class StorageService {
         temperatureUnit: 'celsius',
         windSpeedUnit: 'kmh',
         precipitationUnit: 'mm',
+        visibilityUnit: 'km',
+        pressureUnit: 'hpa',
         selectedTrack: 'silverstone'
       };
     } catch (error) {
@@ -23,6 +25,8 @@ class StorageService {
         temperatureUnit: 'celsius',
         windSpeedUnit: 'kmh',
         precipitationUnit: 'mm',
+        visibilityUnit: 'km',
+        pressureUnit: 'hpa',
         selectedTrack: 'silverstone'
       };
     }

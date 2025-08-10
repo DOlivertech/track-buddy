@@ -85,3 +85,25 @@ export function convertPrecipitation(value: number, unit: 'mm' | 'inches'): numb
 export function getPrecipitationUnit(unit: 'mm' | 'inches'): string {
   return unit === 'mm' ? 'mm' : 'in';
 }
+
+export function convertVisibility(value: number, unit: 'km' | 'miles'): number {
+  if (unit === 'miles') {
+    return Math.round((value * 0.621371) * 10) / 10; // Convert km to miles with 1 decimal place
+  }
+  return value;
+}
+
+export function getVisibilityUnit(unit: 'km' | 'miles'): string {
+  return unit === 'km' ? 'km' : 'mi';
+}
+
+export function convertPressure(value: number, unit: 'hpa' | 'inhg'): number {
+  if (unit === 'inhg') {
+    return Math.round((value * 0.02953) * 100) / 100; // Convert hPa to inHg with 2 decimal places
+  }
+  return value;
+}
+
+export function getPressureUnit(unit: 'hpa' | 'inhg'): string {
+  return unit === 'hpa' ? 'hPa' : 'inHg';
+}

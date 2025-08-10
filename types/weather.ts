@@ -63,5 +63,7 @@ export interface UserSettings {
   temperatureUnit: 'celsius' | 'fahrenheit';
   windSpeedUnit: 'kmh' | 'mph';
   precipitationUnit: 'mm' | 'inches';
+  visibilityUnit: 'km' | 'miles';
+  pressureUnit: 'hpa' | 'inhg';
   selectedTrack: string;
 }

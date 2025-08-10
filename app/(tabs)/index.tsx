@@ -23,7 +23,11 @@ import {
   convertPrecipitation,
   getPrecipitationUnit,
   getTemperatureUnit,
-  getWindSpeedUnit 
+  getWindSpeedUnit,
+  convertVisibility,
+  getVisibilityUnit,
+  convertPressure,
+  getPressureUnit
 } from '@/utils/raceConditions';
 import { getTimeOfDay, getTimeOfDayDescription } from '@/utils/timeOfDay';
 import { getTrackLocalTime } from '@/utils/timeZone';
@@ -128,9 +132,13 @@ export default function CurrentWeatherScreen() {
   const windSpeed = convertWindSpeed(weatherData.current.windSpeed, settings.windSpeedUnit);
   const windDirection = getCardinalDirection(weatherData.current.windDirection);
   const precipitation = convertPrecipitation(weatherData.current.precipitation, settings.precipitationUnit);
+  const visibility = convertVisibility(weatherData.current.visibility, settings.visibilityUnit);
+  const pressure = convertPressure(weatherData.current.pressure, settings.pressureUnit);
   const tempUnit = getTemperatureUnit(settings.temperatureUnit);
   const windUnit = getWindSpeedUnit(settings.windSpeedUnit);
   const precipitationUnit = getPrecipitationUnit(settings.precipitationUnit);
+  const visibilityUnit = getVisibilityUnit(settings.visibilityUnit);
+  const pressureUnit = getPressureUnit(settings.pressureUnit);
 
   const timeOfDay = getTimeOfDay();
   const visibleNotes = notes.filter(note => !dismissedNotes.has(note.id));
@@ -251,12 +259,12 @@ export default function CurrentWeatherScreen() {
         <View style={styles.metricsRow}>
           <WeatherMetric
             label="Pressure"
-            value={`${weatherData.current.pressure} hPa`}
+            value={`${pressure} ${pressureUnit}`}
             icon={<Gauge size={16} color={colors.textSecondary} />}
           />
           <WeatherMetric
             label="Visibility"
-            value={`${weatherData.current.visibility} km`}
+            value={`${visibility} ${visibilityUnit}`}
             icon={<Eye size={16} color={colors.textSecondary} />}
           />
         </View>

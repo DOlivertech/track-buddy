@@ -10,7 +10,11 @@ import {
   convertWindSpeed, 
   getWindSpeedUnit, 
   convertPrecipitation, 
-  getPrecipitationUnit 
+  getPrecipitationUnit,
+  convertVisibility,
+  getVisibilityUnit,
+  convertPressure,
+  getPressureUnit
 } from '@/utils/raceConditions';
 import { downloadJsonAsFile, generateExportFilename } from '@/utils/fileUtils';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -70,6 +74,22 @@ export default function Settings() {
     if (!settings) return;
     
     const updatedSettings = { ...settings, precipitationUnit: unit };
+    await storageService.saveSettings(updatedSettings);
+    setSettings(updatedSettings);
+  };
+
+  const handleVisibilityUnitChange = async (unit: 'km' | 'miles') => {
+    if (!settings) return;
+    
+    const updatedSettings = { ...settings, visibilityUnit: unit };
+    await storageService.saveSettings(updatedSettings);
+    setSettings(updatedSettings);
+  };
+
+  const handlePressureUnitChange = async (unit: 'hpa' | 'inhg') => {
+    if (!settings) return;
+    
+    const updatedSettings = { ...settings, pressureUnit: unit };
     await storageService.saveSettings(updatedSettings);
     setSettings(updatedSettings);
   };
@@ -192,17 +212,21 @@ export default function Settings() {
     
     const windUnit = getWindSpeedUnit(settings.windSpeedUnit);
     const precipUnit = getPrecipitationUnit(settings.precipitationUnit);
+    const visibilityUnit = getVisibilityUnit(settings.visibilityUnit);
+    const pressureUnit = getPressureUnit(settings.pressureUnit);
     
     const optimalWindSpeed = convertWindSpeed(25, settings.windSpeedUnit);
     const windyWindSpeed = convertWindSpeed(25, settings.windSpeedUnit);
     const extremeWindSpeed = convertWindSpeed(40, settings.windSpeedUnit);
     const extremePrecipitation = convertPrecipitation(50, settings.precipitationUnit);
+    const optimalVisibility = convertVisibility(5, settings.visibilityUnit);
+    const poorVisibility = convertVisibility(5, settings.visibilityUnit);
     
     return {
-      optimal: `• No precipitation\n• Wind speed ≤ ${optimalWindSpeed} ${windUnit}\n• Visibility ≥ 5 km\n• Cloud cover ≤ 80%\n• Humidity ≤ 85%`,
+      optimal: `• No precipitation\n• Wind speed ≤ ${optimalWindSpeed} ${windUnit}\n• Visibility ≥ ${optimalVisibility} ${visibilityUnit}\n• Cloud cover ≤ 80%\n• Humidity ≤ 85%`,
       wet: `• Any precipitation detected\n• OR humidity > 85%\n• Requires intermediate or wet tires\n• Reduced grip and visibility`,
       windy: `• Wind speed > ${windyWindSpeed} ${windUnit}\n• Affects aerodynamics\n• May impact car handling\n• Requires setup adjustments`,
-      poorVis: `• Visibility < 5 km\n• OR cloud cover > 80%\n• Reduced sight lines\n• Extra caution required`,
+      poorVis: `• Visibility < ${poorVisibility} ${visibilityUnit}\n• OR cloud cover > 80%\n• Reduced sight lines\n• Extra caution required`,
       extreme: `• Wind speed > ${extremeWindSpeed} ${windUnit}\n• OR precipitation > ${extremePrecipitation} ${precipUnit}\n• Dangerous racing conditions\n• Consider postponing activities`
     };
   };
