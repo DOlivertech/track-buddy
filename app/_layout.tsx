@@ -42,6 +42,7 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }} initialRouteName="splash">
           <Stack.Screen name="splash" />
           <Stack.Screen name="sessions" />
+          <Stack.Screen name="account" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="+not-found" />
         </Stack>

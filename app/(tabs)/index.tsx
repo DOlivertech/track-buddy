@@ -10,6 +10,7 @@ import { userService } from '@/services/userService';
 import { sessionService } from '@/services/sessionService';
 import { racingTracks } from '@/data/racingTracks';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useUser } from '@/contexts/UserContext';
 import { WeatherIcon } from '@/components/WeatherIcon';
 import { WeatherMetric } from '@/components/WeatherMetric';
 import { RaceConditionBadge } from '@/components/RaceConditionBadge';
@@ -39,11 +40,13 @@ import {
   X,
   Wrench,
   Users,
-  ChevronRight
+  ChevronRight,
+  User
 } from 'lucide-react-native';
 
 export default function CurrentWeatherScreen() {
   const { colors } = useTheme();
+  const { user } = useUser();
   const router = useRouter();
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -169,16 +172,38 @@ export default function CurrentWeatherScreen() {
             <Text style={[styles.location, { color: colors.text }]}>{weatherData.location}</Text>
             <Text style={[styles.country, { color: colors.textSecondary }]}>{weatherData.country}</Text>
           </View>
-          <TouchableOpacity
-            style={[styles.refreshButton, { backgroundColor: colors.surfaceSecondary }]}
-            onPress={handleRefresh}
-            disabled={refreshing}
-          >
-            <RefreshCcw 
-              size={24} 
-              color={refreshing ? colors.textTertiary : colors.primary} 
-            />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={[styles.refreshButton, { backgroundColor: colors.surfaceSecondary }]}
+              onPress={handleRefresh}
+              disabled={refreshing}
+            >
+              <RefreshCcw 
+                size={24} 
+                color={refreshing ? colors.textTertiary : colors.primary} 
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.avatarButton}
+              onPress={() => router.push('/account')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.userAvatar, { backgroundColor: colors.primary }]}>
+                {user?.profileImage ? (
+                  <Image
+                    source={{ uri: user.profileImage }}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <User size={20} color={colors.primaryText} />
+                )}
+              </View>
+              <View style={[styles.proBadge, { backgroundColor: colors.warning }]}>
+                <Text style={styles.proBadgeText}>PRO</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
         <View style={styles.badgesContainer}>
           <RaceConditionBadge condition={raceCondition} size="large" />
@@ -522,6 +547,51 @@ const styles = StyleSheet.create({
   refreshButton: {
     padding: 8,
     borderRadius: 12,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatarButton: {
+    position: 'relative',
+  },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  avatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  proBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 4,
+  },
+  proBadgeText: {
+    fontSize: 8,
+    fontFamily: 'Inter-Bold',
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   sessionContainer: {
     flexDirection: 'row',
