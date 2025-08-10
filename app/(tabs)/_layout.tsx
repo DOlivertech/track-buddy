@@ -8,8 +8,7 @@ import {
   MapPin,
   Wrench,
   CalendarDays,
-  Settings,
-  User
+  Settings 
 } from 'lucide-react-native';
 
 export default function TabLayout() {
@@ -105,15 +104,6 @@ export default function TabLayout() {
           title: 'Settings',
           tabBarIcon: ({ size, color }) => (
             <Settings size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="account"
-        options={{
-          title: 'Account',
-          tabBarIcon: ({ size, color }) => (
-            <User size={size} color={color} />
           ),
         }}
       />
