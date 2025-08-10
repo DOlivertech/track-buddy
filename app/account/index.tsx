@@ -7,9 +7,8 @@ import {
   TouchableOpacity, 
   TextInput, 
   Modal,
-  Switch
+  Image
 } from 'react-native';
-import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -520,11 +519,10 @@ export default function AccountScreen() {
         <View style={[styles.comingSoonSection, { backgroundColor: colors.surface }]}>
           <View style={styles.comingSoonHeader}>
             <AlertTriangle size={20} color={colors.warning} />
-            <Text style={[styles.comingSoonTitle, { color: colors.text }]}>Team Features Coming Soon</Text>
+            <Text style={[styles.comingSoonTitle, { color: colors.text }]}>Coming Soon</Text>
           </View>
           <Text style={[styles.comingSoonText, { color: colors.textSecondary }]}>
-            Full team collaboration features including real-time data sharing, member management, 
-            and team sessions are currently in development and will be available in a future update.
+            Advanced team collaboration features, shared telemetry analysis, and real-time session sharing are coming in future updates.
           </Text>
         </View>
       </ScrollView>
