@@ -346,6 +346,43 @@ class TeamService {
     }
   }
 
+  // Load team session and switch app context
+  async switchToTeamSession(teamId: string, sessionId: string): Promise<boolean> {
+    try {
+      console.log('🔄 Switching to team session:', teamId, sessionId);
+      
+      // First, save current session data if there's an active session
+      const { sessionService } = await import('./sessionService');
+      const currentActiveId = await sessionService.getActiveSessionId();
+      if (currentActiveId) {
+        console.log('💾 Saving current session before switching...');
+        await sessionService.saveCurrentDataToSession(currentActiveId);
+      }
+
+      // Load the team session data
+      const teamSessionData = await this.loadTeamSession(teamId, sessionId);
+      if (!teamSessionData) {
+        console.error('❌ Team session data not found');
+        return false;
+      }
+
+      // Clear current data and load team session data
+      const { userService } = await import('./userService');
+      await userService.resetCurrentSessionData();
+      await userService.loadDataFromSession(teamSessionData);
+
+      // Set this as the active session (using team session ID format)
+      const teamSessionKey = `${teamId}_${sessionId}`;
+      await sessionService.setActiveSessionId(teamSessionKey);
+      
+      console.log('✅ Successfully switched to team session');
+      return true;
+    } catch (error) {
+      console.error('Error switching to team session:', error);
+      return false;
+    }
+  }
+
   // Save team session data
   async saveTeamSessionData(teamId: string, sessionId: string, data: AppData): Promise<void> {
     try {
