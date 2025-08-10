@@ -18,23 +18,7 @@ import { ImageUploader } from '@/components/ImageUploader';
 import { teamService } from '@/services/teamService';
 import { apiService } from '@/services/apiService';
 import { Team, TeamMember } from '@/types/team';
-import { 
-  User, 
-  Settings, 
-  Users, 
-  Plus, 
-  RefreshCcw, 
-  Crown, 
-  Shield, 
-  Car, 
-  UserCheck,
-  Mail,
-  Phone,
-  Trash2,
-  CreditCard as Edit3,
-  ChevronRight,
-  AlertTriangle
-} from 'lucide-react-native';
+import { User, Settings, Users, Plus, RefreshCcw, Crown, Shield, Car, UserCheck, Mail, Phone, Trash2, CreditCard as Edit3, ChevronRight, TriangleAlert as AlertTriangle } from 'lucide-react-native';
 
 export default function AccountScreen() {
   const { colors } = useTheme();
