@@ -89,6 +89,24 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="setup"
+        options={{
+          title: 'Setup',
+          tabBarIcon: ({ size, color }) => (
+            <Wrench size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ size, color }) => (
+            <Settings size={size} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

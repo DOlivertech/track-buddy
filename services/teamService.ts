@@ -415,6 +415,199 @@ class TeamService {
   isDemoTeam(teamId: string): boolean {
     return teamId === 'demo-team-001';
   }
+
+  // Update team metadata
+  async updateTeam(teamId: string, updates: Partial<Pick<Team, 'name' | 'description' | 'emoji' | 'imageUrl'>>): Promise<boolean> {
+    try {
+      const teams = await this.getUserTeams();
+      const teamIndex = teams.findIndex(t => t.id === teamId);
+      
+      if (teamIndex === -1) {
+        return false;
+      }
+
+      teams[teamIndex] = {
+        ...teams[teamIndex],
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
+
+      await this.saveTeams(teams);
+      console.log('✅ Updated team:', teamId);
+      return true;
+    } catch (error) {
+      console.error('Error updating team:', error);
+      return false;
+    }
+  }
+
+  // Delete team and all associated data
+  async deleteTeam(teamId: string): Promise<boolean> {
+    try {
+      // Prevent deletion of demo team
+      if (this.isDemoTeam(teamId)) {
+        console.warn('Cannot delete demo team');
+        return false;
+      }
+
+      console.log('🗑️ Deleting team:', teamId);
+      
+      // Get team sessions to delete their data
+      const teamSessions = await this.getTeamSessions(teamId);
+      
+      // Remove all team session data
+      for (const session of teamSessions) {
+        const sessionKey = `${this.TEAM_SESSIONS_PREFIX}${teamId}_${session.id}`;
+        await AsyncStorage.removeItem(sessionKey);
+      }
+
+      // Remove team sessions list
+      await AsyncStorage.removeItem(`${this.TEAM_SESSIONS_PREFIX}${teamId}`);
+
+      // Remove from teams list
+      const teams = await this.getUserTeams();
+      const filteredTeams = teams.filter(t => t.id !== teamId);
+      await this.saveTeams(filteredTeams);
+
+      // Check if this team session was active and clear it
+      const { sessionService } = await import('./sessionService');
+      const activeSessionId = await sessionService.getActiveSessionId();
+      if (activeSessionId && activeSessionId.startsWith(`${teamId}_`)) {
+        await sessionService.setActiveSessionId('');
+      }
+
+      console.log('✅ Team deleted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error deleting team:', error);
+      return false;
+    }
+  }
+
+  // Create team session
+  async createTeamSession(teamId: string, sessionData: {
+    name: string;
+    description?: string;
+    trackId?: string;
+  }): Promise<TeamSession | null> {
+    try {
+      const sessionId = Date.now().toString();
+      const newSession: TeamSession = {
+        id: sessionId,
+        name: sessionData.name.trim(),
+        description: sessionData.description?.trim(),
+        trackId: sessionData.trackId,
+        createdBy: 'current-user',
+        createdAt: new Date().toISOString(),
+        lastModified: new Date().toISOString()
+      };
+
+      // Add to team's sessions list
+      const teams = await this.getUserTeams();
+      const teamIndex = teams.findIndex(t => t.id === teamId);
+      if (teamIndex === -1) return null;
+
+      teams[teamIndex].sessions.push(newSession);
+      teams[teamIndex].updatedAt = new Date().toISOString();
+      await this.saveTeams(teams);
+
+      // Initialize empty session data
+      const emptySessionData: AppData = {
+        user: {
+          id: Date.now().toString(),
+          name: 'Team Member',
+          createdAt: new Date().toISOString()
+        },
+        notes: [],
+        setups: [],
+        raceWeekends: [],
+        settings: {
+          temperatureUnit: 'celsius',
+          windSpeedUnit: 'kmh',
+          precipitationUnit: 'mm',
+          visibilityUnit: 'km',
+          pressureUnit: 'hpa',
+          selectedTrack: sessionData.trackId || 'silverstone'
+        },
+        favorites: [],
+        sessionId,
+        exportedAt: new Date().toISOString(),
+        version: '1.0.0'
+      };
+
+      await this.saveTeamSessionData(teamId, sessionId, emptySessionData);
+      console.log('✅ Created team session:', newSession);
+      return newSession;
+    } catch (error) {
+      console.error('Error creating team session:', error);
+      return null;
+    }
+  }
+
+  // Update team session
+  async updateTeamSession(teamId: string, sessionId: string, updates: Partial<Pick<TeamSession, 'name' | 'description' | 'trackId'>>): Promise<boolean> {
+    try {
+      const teams = await this.getUserTeams();
+      const teamIndex = teams.findIndex(t => t.id === teamId);
+      if (teamIndex === -1) return false;
+
+      const sessionIndex = teams[teamIndex].sessions.findIndex(s => s.id === sessionId);
+      if (sessionIndex === -1) return false;
+
+      teams[teamIndex].sessions[sessionIndex] = {
+        ...teams[teamIndex].sessions[sessionIndex],
+        ...updates,
+        lastModified: new Date().toISOString()
+      };
+      teams[teamIndex].updatedAt = new Date().toISOString();
+
+      await this.saveTeams(teams);
+      console.log('✅ Updated team session:', sessionId);
+      return true;
+    } catch (error) {
+      console.error('Error updating team session:', error);
+      return false;
+    }
+  }
+
+  // Delete team session
+  async deleteTeamSession(teamId: string, sessionId: string): Promise<boolean> {
+    try {
+      console.log('🗑️ Deleting team session:', teamId, sessionId);
+      
+      // Remove session data
+      const sessionKey = `${this.TEAM_SESSIONS_PREFIX}${teamId}_${sessionId}`;
+      await AsyncStorage.removeItem(sessionKey);
+
+      // Remove from team's sessions list
+      const teams = await this.getUserTeams();
+      const teamIndex = teams.findIndex(t => t.id === teamId);
+      if (teamIndex === -1) return false;
+
+      const originalLength = teams[teamIndex].sessions.length;
+      teams[teamIndex].sessions = teams[teamIndex].sessions.filter(s => s.id !== sessionId);
+      
+      if (teams[teamIndex].sessions.length === originalLength) {
+        return false; // Session not found
+      }
+
+      teams[teamIndex].updatedAt = new Date().toISOString();
+      await this.saveTeams(teams);
+
+      // Check if this was the active session and clear it
+      const { sessionService } = await import('./sessionService');
+      const activeSessionId = await sessionService.getActiveSessionId();
+      if (activeSessionId === `${teamId}_${sessionId}`) {
+        await sessionService.setActiveSessionId('');
+      }
+
+      console.log('✅ Team session deleted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error deleting team session:', error);
+      return false;
+    }
+  }
 }
 
 export const teamService = new TeamService();
