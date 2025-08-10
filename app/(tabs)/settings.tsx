@@ -225,10 +225,10 @@ export default function Settings() {
     const poorVisibility = convertVisibility(5, settings.visibilityUnit);
     
     return {
-      optimal: `• No precipitation\n• Wind speed ≤ ${optimalWindSpeed} ${windUnit}\n• Visibility ≥ ${optimalVisibility} ${visibilityUnit}\n• Cloud cover ≤ 80%\n• Humidity ≤ 85%`,
+      optimal: `• No precipitation\n• Wind speed ≤ ${optimalWindSpeed} ${windUnit}\n• Visibility ≥ ${optimalVisibility} ${getVisibilityUnit(settings.visibilityUnit)}\n• Cloud cover ≤ 80%\n• Humidity ≤ 85%`,
       wet: `• Any precipitation detected\n• OR humidity > 85%\n• Requires intermediate or wet tires\n• Reduced grip and visibility`,
       windy: `• Wind speed > ${windyWindSpeed} ${windUnit}\n• Affects aerodynamics\n• May impact car handling\n• Requires setup adjustments`,
-      poorVis: `• Visibility < ${poorVisibility} ${visibilityUnit}\n• OR cloud cover > 80%\n• Reduced sight lines\n• Extra caution required`,
+      poorVis: `• Visibility < ${poorVisibility} ${getVisibilityUnit(settings.visibilityUnit)}\n• OR cloud cover > 80%\n• Reduced sight lines\n• Extra caution required`,
       extreme: `• Wind speed > ${extremeWindSpeed} ${windUnit}\n• OR precipitation > ${extremePrecipitation} ${precipUnit}\n• Dangerous racing conditions\n• Consider postponing activities`
     };
   };
